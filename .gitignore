@@ -13,3 +13,6 @@
 
 npm-debug.log*
 .DS_Store
+
+/linux-x64/onboarding-api
+/windows-x64/onboarding-api.exe
