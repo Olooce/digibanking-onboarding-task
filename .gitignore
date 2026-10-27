@@ -1,2 +1,15 @@
 /config.xml
 /data/onboarding.sqlite
+/data/*.sqlite-wal
+/data/*.sqlite-shm
+/data/*.sqlite-journal
+
+
+/.remember/
+
+/web/node_modules/
+/web/dist/
+*.tsbuildinfo
+
+npm-debug.log*
+.DS_Store
