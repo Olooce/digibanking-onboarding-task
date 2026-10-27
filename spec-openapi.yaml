@@ -1,0 +1,368 @@
+openapi: 3.1.0
+info:
+  title: Bulk Digital Banking Onboarding API
+  version: 1.0.0
+  description: >-
+    Training API for resumable XLSX ingestion, simulated core banking checks,
+    reviewable validation, explicit commit, progress events, and auditable exports.
+    No real bank is contacted.
+servers:
+  - url: http://localhost:3000/api/v1
+security: []
+x-response-format: application/xml for all API responses except binary downloads and text/event-stream. XML requests use application/xml.
+tags:
+  - name: Uploads
+  - name: Members
+  - name: Reference
+paths:
+  /health:
+    get:
+      tags: [Reference]
+      operationId: health
+      responses:
+        '200': { description: Service and database health, content: { application/xml: { schema: { $ref: '#/components/schemas/XmlResponse' } } } }
+  /onboarding/template:
+    get:
+      tags: [Reference]
+      operationId: downloadTemplate
+      responses:
+        '200':
+          description: XLSX onboarding template
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, format: binary }
+  /core-banking/members:
+    get:
+      tags: [Reference]
+      operationId: searchCoreMembers
+      summary: Simulated core banking lookup by any one identifier
+      parameters:
+        - in: query
+          name: phone_number
+          schema: { type: string }
+        - in: query
+          name: member_number
+          schema: { type: string }
+        - in: query
+          name: id_number
+          schema: { type: string }
+      responses:
+        '200': { description: Match result (delayed to simulate a core banking call), content: { application/xml: { schema: { $ref: '#/components/schemas/XmlResponse' } } } }
+        '400': { description: Exactly one identifier is required, content: { application/xml: { schema: { $ref: '#/components/schemas/XmlResponse' } } } }
+  /uploads:
+    get:
+      tags: [Uploads]
+      operationId: listUploads
+      parameters:
+        - { in: query, name: page, schema: { type: integer, minimum: 1, default: 1 } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+        - { in: query, name: status, schema: { type: string, enum: [created, uploading, uploaded, validating, validated, validated_with_errors, committing, committed, committed_with_errors, failed] } }
+        - { $ref: '#/components/parameters/Filter' }
+        - { $ref: '#/components/parameters/OrderBy' }
+        - { $ref: '#/components/parameters/Top' }
+        - { $ref: '#/components/parameters/Skip' }
+        - { $ref: '#/components/parameters/Count' }
+        - { $ref: '#/components/parameters/Select' }
+      responses:
+        '200': { description: Paginated upload instances, content: { application/xml: { schema: { $ref: '#/components/schemas/XmlResponse' } } } }
+    post:
+      tags: [Uploads]
+      operationId: createUpload
+      summary: Create or recover an upload session
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: { type: string, minLength: 8, maxLength: 128 }
+      requestBody:
+        required: true
+        content:
+          application/xml:
+            schema: { $ref: '#/components/schemas/UploadRequest' }
+            examples:
+              createBatch:
+                summary: Create a named resumable upload
+                value: |
+                  <upload_request>
+                    <batch_name>October branch onboarding</batch_name>
+                    <description>New digital banking enrollments from Nairobi branches.</description>
+                    <file_name>members.xlsx</file_name>
+                    <file_size>182034</file_size>
+                    <file_sha256>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</file_sha256>
+                  </upload_request>
+      responses:
+        '201':
+          description: Created resumable session
+          content:
+            application/xml:
+              schema: { $ref: '#/components/schemas/XmlResponse' }
+              examples:
+                created:
+                  summary: Batch created and ready for chunks
+                  value: |
+                    <response>
+                      <upload>
+                        <id>7f4d9e5a-1a13-4d11-94d6-0f74fd57a5c1</id>
+                        <batch_name>October branch onboarding</batch_name>
+                        <description>New digital banking enrollments from Nairobi branches.</description>
+                        <file_name>members.xlsx</file_name>
+                        <file_size>182034</file_size>
+                        <status>uploading</status>
+                        <uploaded_chunks></uploaded_chunks>
+                        <chunk_count>1</chunk_count>
+                        <upload_progress>0</upload_progress>
+                        <process_progress>0</process_progress>
+                      </upload>
+                      <resumed>false</resumed>
+                    </response>
+        '200': { description: Existing session returned for idempotent retry, content: { application/xml: { schema: { $ref: '#/components/schemas/XmlResponse' } } } }
+        '400':
+          description: Invalid metadata, including a missing batch name
+          content:
+            application/xml:
+              schema: { $ref: '#/components/schemas/XmlResponse' }
+              examples:
+                missingBatchName:
+                  summary: Batch name is mandatory
+                  value: |
+                    <response><error><code>INVALID_UPLOAD_METADATA</code><message>A non-empty batch_name (up to 120 characters), file_name, file_size, and 64-character SHA-256 file_sha256 are required.</message></error></response>
+  /uploads/{uploadId}:
+    get:
+      tags: [Uploads]
+      operationId: getUpload
+      parameters: [{ in: path, name: uploadId, required: true, schema: { type: string, format: uuid } }]
+      responses:
+        '200': { description: Upload state, uploaded chunk indices, progress and counters, content: { application/xml: { schema: { $ref: '#/components/schemas/XmlResponse' } } } }
+        '404': { description: Upload not found, content: { application/xml: { schema: { $ref: '#/components/schemas/XmlResponse' } } } }
+  /uploads/{uploadId}/chunks/{chunkIndex}:
+    put:
+      tags: [Uploads]
+      operationId: uploadChunk
+      summary: Upload one binary chunk; repeat safely after uncertain network outcome
+      parameters:
+        - { in: path, name: uploadId, required: true, schema: { type: string, format: uuid } }
+        - { in: path, name: chunkIndex, required: true, schema: { type: integer, minimum: 0 } }
+        - { in: header, name: Content-SHA256, required: true, schema: { type: string, pattern: '^[a-fA-F0-9]{64}$' } }
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: { type: string, format: binary }
+      responses:
+        '200': { description: Chunk stored or already stored with identical digest, content: { application/xml: { schema: { $ref: '#/components/schemas/XmlResponse' } } } }
+        '409': { description: Conflicting duplicate, invalid size, or upload no longer writable, content: { application/xml: { schema: { $ref: '#/components/schemas/XmlResponse' } } } }
+  /uploads/{uploadId}/complete:
+    post:
+      tags: [Uploads]
+      operationId: completeUpload
+      summary: Verify the assembled file and begin asynchronous validation. No members are onboarded yet.
+      parameters: [{ in: path, name: uploadId, required: true, schema: { type: string, format: uuid } }]
+      responses:
+        '202': { description: Processing started or already in progress, content: { application/xml: { schema: { $ref: '#/components/schemas/XmlResponse' } } } }
+        '409': { description: Missing chunks or hash mismatch, content: { application/xml: { schema: { $ref: '#/components/schemas/XmlResponse' } } } }
+  /uploads/{uploadId}/commit:
+    post:
+      tags: [Uploads]
+      operationId: commitValidatedUpload
+      summary: Commit only rows with valid status after validation; invalid and duplicate rows are left unchanged
+      parameters: [{ in: path, name: uploadId, required: true, schema: { type: string, format: uuid } }]
+      requestBody:
+        required: true
+        content:
+          application/xml:
+            schema:
+              type: object
+              xml: { name: commit_request }
+              required: [review_confirmed]
+              properties:
+                review_confirmed: { type: boolean, const: true }
+            examples:
+              confirmReview:
+                summary: Confirm review before committing valid rows
+                value: |
+                  <commit_request>
+                    <review_confirmed>true</review_confirmed>
+                  </commit_request>
+      responses:
+        '200':
+          description: Eligible rows committed; invalid and duplicate rows remain in the batch
+          content:
+            application/xml:
+              schema: { $ref: '#/components/schemas/XmlResponse' }
+              examples:
+                committed:
+                  summary: Three eligible rows were committed
+                  value: |
+                    <response>
+                      <committed_rows>3</committed_rows>
+                      <conflict_rows>0</conflict_rows>
+                      <upload>
+                        <batch_name>October branch onboarding</batch_name>
+                        <status>committed_with_errors</status>
+                        <total_rows>5</total_rows>
+                        <processed_rows>5</processed_rows>
+                        <onboarded_rows>3</onboarded_rows>
+                        <valid_rows>0</valid_rows>
+                        <invalid_rows>2</invalid_rows>
+                      </upload>
+                    </response>
+        '400':
+          description: Review confirmation is required
+          content:
+            application/xml:
+              schema: { $ref: '#/components/schemas/XmlResponse' }
+              examples:
+                reviewRequired:
+                  summary: Caller has not confirmed review
+                  value: |
+                    <response><error><code>REVIEW_REQUIRED</code><message>Review the validation results and confirm before committing valid rows.</message></error></response>
+        '409':
+          description: Validation is incomplete or no valid rows are eligible
+          content:
+            application/xml:
+              schema: { $ref: '#/components/schemas/XmlResponse' }
+              examples:
+                notReady:
+                  summary: Commit attempted before validation completed
+                  value: |
+                    <response><error><code>UPLOAD_NOT_READY</code><message>Wait until validation is complete before committing eligible rows.</message></error></response>
+  /uploads/{uploadId}/events:
+    get:
+      tags: [Uploads]
+      operationId: streamUploadEvents
+      summary: Replayable Server-Sent Events stream
+      parameters:
+        - { in: path, name: uploadId, required: true, schema: { type: string, format: uuid } }
+        - { in: header, name: Last-Event-ID, schema: { type: integer, minimum: 0 } }
+      responses:
+        '200':
+          description: Event stream; reconnect with Last-Event-ID to replay missed events
+          content: { text/event-stream: { schema: { type: string } } }
+  /uploads/{uploadId}/records:
+    get:
+      tags: [Uploads]
+      operationId: listUploadRecords
+      parameters:
+        - { in: path, name: uploadId, required: true, schema: { type: string, format: uuid } }
+        - { in: query, name: page, schema: { type: integer, minimum: 1, default: 1 } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+        - { in: query, name: status, schema: { type: string, enum: [pending, checking, valid, onboarded, invalid, duplicate] } }
+        - { $ref: '#/components/parameters/Filter' }
+        - { $ref: '#/components/parameters/OrderBy' }
+        - { $ref: '#/components/parameters/Top' }
+        - { $ref: '#/components/parameters/Skip' }
+        - { $ref: '#/components/parameters/Count' }
+        - { $ref: '#/components/parameters/Select' }
+      responses:
+        '200':
+          description: Paginated rows and per-status counts
+          content:
+            application/xml:
+              schema: { $ref: '#/components/schemas/XmlResponse' }
+              examples:
+                mixedValidation:
+                  summary: Valid, invalid, and duplicate workbook rows
+                  value: |
+                    <response>
+                      <data>
+                        <item><row_number>2</row_number><first_name>Amina</first_name><last_name>Njeri</last_name><member_number>MBR-100001</member_number><status>valid</status></item>
+                        <item><row_number>3</row_number><first_name>Brian</first_name><last_name>Otieno</last_name><member_number>MBR-999999</member_number><status>invalid</status><reason>No core banking member matches member_number.</reason></item>
+                      </data>
+                      <pagination><page>1</page><limit>20</limit><skip>0</skip><total>5</total><total_pages>1</total_pages></pagination>
+                      <status_counts>
+                        <item><status>valid</status><count>3</count></item>
+                        <item><status>invalid</status><count>1</count></item>
+                        <item><status>duplicate</status><count>1</count></item>
+                      </status_counts>
+                    </response>
+  /uploads/{uploadId}/records/export:
+    get:
+      tags: [Uploads]
+      operationId: exportUploadRecords
+      parameters:
+        - { in: path, name: uploadId, required: true, schema: { type: string, format: uuid } }
+        - { in: query, name: status, schema: { type: string, enum: [pending, checking, valid, onboarded, invalid, duplicate] } }
+        - { in: query, name: format, schema: { type: string, enum: [xlsx, csv], default: xlsx } }
+        - { $ref: '#/components/parameters/Filter' }
+        - { $ref: '#/components/parameters/OrderBy' }
+      responses:
+        '200': { description: Download of matching upload records, content: { application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: { schema: { type: string, format: binary } }, text/csv: { schema: { type: string } } } }
+  /uploads/{uploadId}/invalid.xlsx:
+    get:
+      tags: [Uploads]
+      operationId: downloadInvalidRows
+      parameters: [{ in: path, name: uploadId, required: true, schema: { type: string, format: uuid } }]
+      responses:
+        '200': { description: XLSX containing all invalid and duplicate rows, content: { application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: { schema: { type: string, format: binary } } } }
+  /members:
+    get:
+      tags: [Members]
+      operationId: listOnboardedMembers
+      parameters:
+        - { in: query, name: page, schema: { type: integer, minimum: 1, default: 1 } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+        - { in: query, name: search, schema: { type: string } }
+        - { $ref: '#/components/parameters/Filter' }
+        - { $ref: '#/components/parameters/OrderBy' }
+        - { $ref: '#/components/parameters/Top' }
+        - { $ref: '#/components/parameters/Skip' }
+        - { $ref: '#/components/parameters/Count' }
+        - { $ref: '#/components/parameters/Select' }
+      responses:
+        '200': { description: Paginated onboarded members, content: { application/xml: { schema: { $ref: '#/components/schemas/XmlResponse' } } } }
+  /members/{memberId}:
+    get:
+      tags: [Members]
+      operationId: getOnboardedMember
+      parameters: [{ in: path, name: memberId, required: true, schema: { type: string, format: uuid } }]
+      responses:
+        '200': { description: Onboarded member details, content: { application/xml: { schema: { $ref: '#/components/schemas/XmlResponse' } } } }
+        '404': { description: Member not found, content: { application/xml: { schema: { $ref: '#/components/schemas/XmlResponse' } } } }
+
+components:
+  parameters:
+    Filter:
+      name: $filter
+      in: query
+      description: OData-inspired boolean expression over fields supported by this list.
+      schema: { type: string, maxLength: 2000 }
+    OrderBy:
+      name: $orderby
+      in: query
+      description: Comma-separated allow-listed fields followed by asc or desc.
+      schema: { type: string }
+    Top:
+      name: $top
+      in: query
+      description: Maximum rows to return (1 to 100).
+      schema: { type: integer, minimum: 1, maximum: 100 }
+    Skip:
+      name: $skip
+      in: query
+      description: Number of matching rows to skip.
+      schema: { type: integer, minimum: 0, maximum: 1000000 }
+    Count:
+      name: $count
+      in: query
+      description: Include the matching total in the XML response when true.
+      schema: { type: boolean }
+    Select:
+      name: $select
+      in: query
+      description: Comma-separated allow-listed fields to include in each data item.
+      schema: { type: string }
+  schemas:
+    UploadRequest:
+      type: object
+      xml: { name: upload_request }
+      required: [batch_name, file_name, file_size, file_sha256]
+      properties:
+        batch_name: { type: string, minLength: 1, maxLength: 120, description: Required display name for the upload batch }
+        description: { type: string, maxLength: 1000, description: Optional batch notes }
+        file_name: { type: string, maxLength: 255 }
+        file_size: { type: integer, minimum: 1, maximum: 52428800 }
+        file_sha256: { type: string, pattern: '^[a-fA-F0-9]{64}$' }
+    XmlResponse:
+      type: object
+      description: XML response rooted at response; success fields vary by operation. Errors contain an error element with code and message.
+      xml: { name: response }
