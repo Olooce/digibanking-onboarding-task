@@ -1,4 +1,4 @@
-// Minimal static file server for the web client (no dependencies).
+// Minimal static file server for the built client in web/dist (no dependencies).
 // Usage: node scripts/serve.mjs            -> http://localhost:5173
 //        PORT=8080 node scripts/serve.mjs
 import {createServer} from 'node:http';
@@ -6,7 +6,7 @@ import {readFile, stat} from 'node:fs/promises';
 import {extname, join, normalize, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
-const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
+const ROOT = resolve(fileURLToPath(new URL('../dist', import.meta.url)));
 const PORT = Number(process.env.PORT) || 5173;
 const TYPES = {
     '.html': 'text/html; charset=utf-8',
@@ -22,6 +22,7 @@ const TYPES = {
 
 async function resolveFile(urlPath) {
     const clean = normalize(decodeURIComponent(urlPath.split('?')[0])).replace(/^(\.\.[/\\])+/, '');
+    if (clean.split(/[/\\]/).some((part) => part.startsWith('.'))) return null;
     const file = join(ROOT, clean);
     if (!file.startsWith(ROOT)) return null;
     try {

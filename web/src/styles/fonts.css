@@ -3,7 +3,7 @@
     font-style: normal;
     font-weight: 400;
     font-display: swap;
-    src: url('./fonts/lato/lato-latin-400-normal.woff2') format('woff2');
+    src: url('../../fonts/lato/lato-latin-400-normal.woff2') format('woff2');
 }
 
 @font-face {
@@ -11,7 +11,7 @@
     font-style: normal;
     font-weight: 600 700;
     font-display: swap;
-    src: url('./fonts/lato/lato-latin-700-normal.woff2') format('woff2');
+    src: url('../../fonts/lato/lato-latin-700-normal.woff2') format('woff2');
 }
 
 @font-face {
@@ -19,7 +19,7 @@
     font-style: normal;
     font-weight: 400;
     font-display: swap;
-    src: url('./fonts/jetbrains-mono/jetbrains-mono-latin-400-normal.woff2') format('woff2');
+    src: url('../../fonts/jetbrains-mono/jetbrains-mono-latin-400-normal.woff2') format('woff2');
 }
 
 @font-face {
@@ -27,5 +27,5 @@
     font-style: normal;
     font-weight: 500 700;
     font-display: swap;
-    src: url('./fonts/jetbrains-mono/jetbrains-mono-latin-500-normal.woff2') format('woff2');
+    src: url('../../fonts/jetbrains-mono/jetbrains-mono-latin-500-normal.woff2') format('woff2');
 }

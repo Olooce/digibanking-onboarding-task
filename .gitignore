@@ -16,3 +16,7 @@ npm-debug.log*
 
 /linux-x64/onboarding-api
 /windows-x64/onboarding-api.exe
+
+# Web client environment (copy web/.env.example) and its generated module
+/web/.env
+/web/src/env.generated.ts

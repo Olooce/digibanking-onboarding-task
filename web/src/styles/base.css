@@ -98,6 +98,11 @@ kbd {
     outline-offset: 2px;
 }
 
+h1[tabindex="-1"]:focus,
+main[tabindex="-1"]:focus {
+    outline: none;
+}
+
 [hidden] {
     display: none !important;
 }
