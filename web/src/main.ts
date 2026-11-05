@@ -1,4 +1,5 @@
 import {fromTemplate} from './dom.js';
+import {batchesPage} from './pages/batches.js';
 import {pendingPage} from './pages/pending.js';
 import {createRouter, type Page} from './router.js';
 import {bindShell, type Crumb, type NavKey} from './shell.js';
@@ -26,7 +27,7 @@ const notFound: Page = ({outlet}) => {
 
 const router = createRouter([
     {path: '/', page: () => router.navigate('/batches', {replace: true})},
-    {path: '/batches', page: view('batches', [HOME, {label: 'Upload batches'}], pendingPage('Upload batches', 'Spreadsheet batches submitted for digital banking enrolment.'))},
+    {path: '/batches', page: view('batches', [HOME, {label: 'Upload batches'}], batchesPage(shell))},
     {path: '/batches/new', page: view('batches', [HOME, BATCHES, {label: 'New batch'}], pendingPage('New batch', 'Name the batch, then upload the completed workbook.'))},
     {path: '/batches/:id', page: view('batches', [HOME, BATCHES, {label: 'Batch'}], pendingPage('Batch', 'Validation results and commit.'))},
     {path: '/members', page: view('members', [HOME, {label: 'Onboarded members'}], pendingPage('Onboarded members', 'Members whose onboarding has been confirmed.'))},

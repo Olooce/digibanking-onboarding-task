@@ -1,8 +1,3 @@
-// Assembles the static part of web/dist:
-//   index.html     -> dist/index.html
-//   public/**      -> dist/**            (copied verbatim)
-//   src/styles/**  -> dist/assets/css/**
-
 import {cpSync, mkdirSync, rmSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 
