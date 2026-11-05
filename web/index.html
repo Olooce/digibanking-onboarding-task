@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="./assets/css/base.css">
     <link rel="stylesheet" href="./assets/css/layout.css">
     <link rel="stylesheet" href="./assets/css/components.css">
+    <link rel="stylesheet" href="./assets/css/data-table.css">
     <script type="module" src="./assets/js/main.js"></script>
 </head>
 <body>
@@ -116,7 +117,6 @@
                     <input class="input" type="search" name="q" placeholder="Find a batch by name" aria-label="Find a batch by name" aria-keyshortcuts="/">
                 </div>
             </form>
-            <span class="badge badge--warning" title="Training environment. No real bank is contacted.">Training simulator</span>
         </header>
 
         <main class="content" id="main" tabindex="-1">
@@ -126,6 +126,34 @@
 </div>
 
 <div class="toasts" aria-live="polite" aria-relevant="additions"></div>
+
+<template id="tpl-batches">
+    <div class="page-header">
+        <div class="page-header__titles">
+            <div class="page-header__title"><h1>Upload batches</h1></div>
+            <p class="page-header__sub">Spreadsheet batches submitted for digital banking enrolment. Validation never onboards members; only a commit does.</p>
+        </div>
+        <div class="page-header__actions">
+            <a class="btn btn--primary" href="#/batches/new">
+                <svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>
+                New batch
+            </a>
+        </div>
+    </div>
+    <section class="card" data-slot="panel" aria-label="Upload batches">
+        <div class="tabs" role="tablist" aria-label="Filter batches by stage">
+            <button class="tab" type="button" role="tab" data-tab="all" aria-controls="batches-table">All <span class="tab__count" hidden></span></button>
+            <button class="tab" type="button" role="tab" data-tab="review" aria-controls="batches-table">Needs review <span class="tab__count" hidden></span></button>
+            <button class="tab" type="button" role="tab" data-tab="progress" aria-controls="batches-table">In progress <span class="tab__count" hidden></span></button>
+            <button class="tab" type="button" role="tab" data-tab="committed" aria-controls="batches-table">Committed <span class="tab__count" hidden></span></button>
+            <button class="tab" type="button" role="tab" data-tab="failed" aria-controls="batches-table">Failed <span class="tab__count" hidden></span></button>
+            <button class="icon-btn tabs__aside" type="button" aria-label="Refresh" title="Refresh" data-slot="refresh">
+                <svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg>
+            </button>
+        </div>
+        <div id="batches-table" role="tabpanel" data-slot="table"></div>
+    </section>
+</template>
 
 <template id="tpl-pending">
     <div class="page-header">

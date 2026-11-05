@@ -41,6 +41,18 @@ function parseHash(): { path: string; query: URLSearchParams } {
     return {path: path.startsWith('/') ? path : `/${path}`, query: new URLSearchParams(search)};
 }
 
+/** Rewrites query keys of the current hash without triggering a re-render. */
+export function patchHashQuery(changes: Record<string, string | string[] | null>): void {
+    const {path, query} = parseHash();
+    for (const [key, value] of Object.entries(changes)) {
+        query.delete(key);
+        if (value === null) continue;
+        for (const item of Array.isArray(value) ? value : [value]) query.append(key, item);
+    }
+    const search = query.toString();
+    history.replaceState(null, '', `#${path}${search ? `?${search}` : ''}`);
+}
+
 export function createRouter(
     defs: RouteDef[],
     outlet: HTMLElement,
