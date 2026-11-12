@@ -1,4 +1,4 @@
-import type {Condition, Query} from '../ui/dataTable.js';
+import type {Condition, Match, Sort} from '../ui/dataTable.js';
 
 /** A quoted OData string; embedded quotes are doubled. */
 export function literal(value: string): string {
@@ -25,13 +25,20 @@ function dateExpr({field, op, value, value2}: Condition): string {
     const from = `${field} ge ${dayStart(value)}`;
     const until = `${field} lt ${dayStart(value, 1)}`;
     switch (op) {
-        case 'eq': return `${from} and ${until}`;
-        case 'neq': return `not (${from} and ${until})`;
-        case 'gt': return `${field} ge ${dayStart(value, 1)}`;
-        case 'gte': return from;
-        case 'lt': return `${field} lt ${dayStart(value)}`;
-        case 'lte': return until;
-        default: return `${from} and ${field} lt ${dayStart(value2, 1)}`;
+        case 'eq':
+            return `${from} and ${until}`;
+        case 'neq':
+            return `not (${from} and ${until})`;
+        case 'gt':
+            return `${field} ge ${dayStart(value, 1)}`;
+        case 'gte':
+            return from;
+        case 'lt':
+            return `${field} lt ${dayStart(value)}`;
+        case 'lte':
+            return until;
+        default:
+            return `${from} and ${field} lt ${dayStart(value2, 1)}`;
     }
 }
 
@@ -45,9 +52,21 @@ function valueExpr(field: string, op: string, value: string, numeric: boolean): 
     return fn ? `${fn}(${field},${operand})` : `${field} ${COMPARISON[op] ?? 'eq'} ${operand}`;
 }
 
+/** The parts of the table's state that decide which rows the API returns. */
+export interface ListView {
+    page: number;
+    pageSize: number;
+    sorts: Sort[];
+    filters: Condition[];
+    match: Match;
+    quick: Condition | null;
+}
+
 export interface ListSchema {
     /** Fields behind the table's "Any text column" search. */
     searchFields: string[];
+    /** Send "contains" searches to the API's own search parameter instead, for lists that have one. */
+    searchParam?: string;
     numberFields?: string[];
     dateFields?: string[];
 }
@@ -61,10 +80,15 @@ function conditionExpr(condition: Condition, schema: ListSchema): string {
 }
 
 /** Translates the table's query into the API's OData-style list parameters. */
-export function toODataParams(query: Query, schema: ListSchema, scope: string | null = null): URLSearchParams {
+export function toODataParams(query: ListView, schema: ListSchema, scope: string | null = null): URLSearchParams {
     const params = new URLSearchParams();
     const conditions = join(query.filters.map((item) => conditionExpr(item, schema)), query.match === 'any' ? 'or' : 'and');
-    const filter = join([scope, query.quick ? conditionExpr(query.quick, schema) : null, conditions], 'and');
+    let quick = query.quick ? conditionExpr(query.quick, schema) : null;
+    if (schema.searchParam && query.quick?.field === '' && query.quick.op === 'contains') {
+        params.set(schema.searchParam, query.quick.value);
+        quick = null;
+    }
+    const filter = join([scope, quick, conditions], 'and');
     if (filter) params.set('$filter', filter);
     if (query.sorts.length) params.set('$orderby', query.sorts.map(({field, dir}) => `${field} ${dir}`).join(','));
     params.set('$top', String(query.pageSize));
@@ -72,3 +96,10 @@ export function toODataParams(query: Query, schema: ListSchema, scope: string | 
     params.set('$count', 'true');
     return params;
 }
+
+/** Filter choices a column offers, limited to what the API's $filter supports. */
+const COMPARISONS = ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'between'];
+export const TEXT_FILTER = {operators: ['contains', 'notContains', 'startsWith', 'endsWith', 'eq', 'neq']};
+export const NUMBER_FILTER = {type: 'number' as const, operators: COMPARISONS};
+export const DATE_FILTER = {type: 'date' as const, operators: COMPARISONS};
+export const ENUM_FILTER = {type: 'enum' as const, operators: ['eq', 'neq']};

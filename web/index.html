@@ -2,75 +2,190 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
     <title>DigiBank - Bulk Onboarding Console</title>
-    <meta name="description" content="Staff console for bulk digital banking onboarding.">
-    <link rel="preload" href="./fonts/lato/lato-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="./assets/css/fonts.css">
-    <link rel="stylesheet" href="./assets/css/tokens.css">
-    <link rel="stylesheet" href="./assets/css/base.css">
-    <link rel="stylesheet" href="./assets/css/layout.css">
-    <link rel="stylesheet" href="./assets/css/components.css">
-    <link rel="stylesheet" href="./assets/css/data-table.css">
-    <script type="module" src="./assets/js/main.js"></script>
+    <meta content="Staff console for bulk digital banking onboarding." name="description">
+    <link as="font" crossorigin href="./fonts/lato/lato-latin-400-normal.woff2" rel="preload" type="font/woff2">
+    <link href="./assets/css/fonts.css" rel="stylesheet">
+    <link href="./assets/css/tokens.css" rel="stylesheet">
+    <link href="./assets/css/base.css" rel="stylesheet">
+    <link href="./assets/css/layout.css" rel="stylesheet">
+    <link href="./assets/css/components.css" rel="stylesheet">
+    <link href="./assets/css/data-table.css" rel="stylesheet">
+    <script src="./assets/js/main.js" type="module"></script>
 </head>
 <body>
-<svg class="sprite" aria-hidden="true" focusable="false">
-    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
-    <symbol id="i-filter" viewBox="0 0 24 24"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></symbol>
-    <symbol id="i-sort" viewBox="0 0 24 24"><path d="m3 8 4-4 4 4M7 4v16M21 16l-4 4-4-4M17 20V4"/></symbol>
-    <symbol id="i-columns" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18"/></symbol>
-    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
-    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
-    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></symbol>
-    <symbol id="i-first" viewBox="0 0 24 24"><path d="m11 17-5-5 5-5M18 17l-5-5 5-5"/></symbol>
-    <symbol id="i-prev" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
-    <symbol id="i-next" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
-    <symbol id="i-last" viewBox="0 0 24 24"><path d="m6 17 5-5-5-5M13 17l5-5-5-5"/></symbol>
-    <symbol id="i-up" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></symbol>
-    <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
-    <symbol id="i-kebab" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></symbol>
-    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
-    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></symbol>
-    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
-    <symbol id="i-checkCircle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
-    <symbol id="i-xCircle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></symbol>
-    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></symbol>
-    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
-    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
-    <symbol id="i-wifiOff" viewBox="0 0 24 24"><path d="M12 20h.01M8.5 16.43a5 5 0 0 1 7 0M2 8.82a15 15 0 0 1 4.17-2.65M10.66 5c4.01-.36 8.14.9 11.34 3.76M16.85 11.25a10 10 0 0 1 2.22 1.68M5 12.86a10 10 0 0 1 5.17-2.69M2 2l20 20"/></symbol>
-    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></symbol>
-    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
-    <symbol id="i-sheet" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M8 13h2M14 13h2M8 17h2M14 17h2"/></symbol>
-    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
-    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
-    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
-    <symbol id="i-play" viewBox="0 0 24 24"><path d="m6 3 14 9-14 9z"/></symbol>
-    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></symbol>
-    <symbol id="i-arrowLeft" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></symbol>
-    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></symbol>
-    <symbol id="i-external" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
-    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></symbol>
-    <symbol id="i-shieldCheck" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
-    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+<svg aria-hidden="true" class="sprite" focusable="false">
+    <symbol id="i-search" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="m21 21-4.3-4.3"/>
+    </symbol>
+    <symbol id="i-filter" viewBox="0 0 24 24">
+        <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
+    </symbol>
+    <symbol id="i-sort" viewBox="0 0 24 24">
+        <path d="m3 8 4-4 4 4M7 4v16M21 16l-4 4-4-4M17 20V4"/>
+    </symbol>
+    <symbol id="i-columns" viewBox="0 0 24 24">
+        <rect height="18" rx="2" width="18" x="3" y="3"/>
+        <path d="M9 3v18M15 3v18"/>
+    </symbol>
+    <symbol id="i-x" viewBox="0 0 24 24">
+        <path d="M18 6 6 18M6 6l12 12"/>
+    </symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24">
+        <path d="M5 12h14M12 5v14"/>
+    </symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24">
+        <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/>
+    </symbol>
+    <symbol id="i-first" viewBox="0 0 24 24">
+        <path d="m11 17-5-5 5-5M18 17l-5-5 5-5"/>
+    </symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24">
+        <path d="m15 18-6-6 6-6"/>
+    </symbol>
+    <symbol id="i-next" viewBox="0 0 24 24">
+        <path d="m9 18 6-6-6-6"/>
+    </symbol>
+    <symbol id="i-last" viewBox="0 0 24 24">
+        <path d="m6 17 5-5-5-5M13 17l5-5-5-5"/>
+    </symbol>
+    <symbol id="i-up" viewBox="0 0 24 24">
+        <path d="m18 15-6-6-6 6"/>
+    </symbol>
+    <symbol id="i-down" viewBox="0 0 24 24">
+        <path d="m6 9 6 6 6-6"/>
+    </symbol>
+    <symbol id="i-kebab" viewBox="0 0 24 24">
+        <circle cx="12" cy="5" r="1.6"/>
+        <circle cx="12" cy="12" r="1.6"/>
+        <circle cx="12" cy="19" r="1.6"/>
+    </symbol>
+    <symbol id="i-download" viewBox="0 0 24 24">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <path d="m7 10 5 5 5-5"/>
+        <path d="M12 15V3"/>
+    </symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <path d="m17 8-5-5-5 5"/>
+        <path d="M12 3v12"/>
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="M20 6 9 17l-5-5"/>
+    </symbol>
+    <symbol id="i-checkCircle" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="m9 12 2 2 4-4"/>
+    </symbol>
+    <symbol id="i-xCircle" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="m15 9-6 6M9 9l6 6"/>
+    </symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24">
+        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/>
+        <path d="M12 9v4M12 17h.01"/>
+    </symbol>
+    <symbol id="i-info" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 16v-4M12 8h.01"/>
+    </symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24">
+        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+        <path d="M21 3v5h-5"/>
+        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+        <path d="M8 16H3v5"/>
+    </symbol>
+    <symbol id="i-wifiOff" viewBox="0 0 24 24">
+        <path d="M12 20h.01M8.5 16.43a5 5 0 0 1 7 0M2 8.82a15 15 0 0 1 4.17-2.65M10.66 5c4.01-.36 8.14.9 11.34 3.76M16.85 11.25a10 10 0 0 1 2.22 1.68M5 12.86a10 10 0 0 1 5.17-2.69M2 2l20 20"/>
+    </symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24">
+        <path d="m12 2 10 5-10 5L2 7z"/>
+        <path d="m2 17 10 5 10-5"/>
+        <path d="m2 12 10 5 10-5"/>
+    </symbol>
+    <symbol id="i-users" viewBox="0 0 24 24">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+    </symbol>
+    <symbol id="i-sheet" viewBox="0 0 24 24">
+        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/>
+        <path d="M14 2v4a2 2 0 0 0 2 2h4M8 13h2M14 13h2M8 17h2M14 17h2"/>
+    </symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24">
+        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/>
+        <circle cx="12" cy="12" r="3"/>
+    </symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 6v6l4 2"/>
+    </symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24">
+        <rect height="13" rx="2" width="13" x="9" y="9"/>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+    </symbol>
+    <symbol id="i-play" viewBox="0 0 24 24">
+        <path d="m6 3 14 9-14 9z"/>
+    </symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24">
+        <path d="M6 4h4v16H6zM14 4h4v16h-4z"/>
+    </symbol>
+    <symbol id="i-arrowLeft" viewBox="0 0 24 24">
+        <path d="m12 19-7-7 7-7M19 12H5"/>
+    </symbol>
+    <symbol id="i-help" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/>
+    </symbol>
+    <symbol id="i-external" viewBox="0 0 24 24">
+        <path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+    </symbol>
+    <symbol id="i-user" viewBox="0 0 24 24">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>
+    </symbol>
+    <symbol id="i-shieldCheck" viewBox="0 0 24 24">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        <path d="m9 12 2 2 4-4"/>
+    </symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24">
+        <path d="M4 6h16M4 12h16M4 18h16"/>
+    </symbol>
+    <symbol id="i-panel" viewBox="0 0 24 24">
+        <rect height="18" rx="2" width="18" x="3" y="3"/>
+        <path d="M9 3v18"/>
+    </symbol>
 
 </svg>
 
-<a class="skip-link" href="#main" data-skip-link>Skip to main content</a>
+<a class="skip-link" data-skip-link href="#main">Skip to main content</a>
 
 <div class="app">
-    <nav class="sidebar" id="sidebar" aria-label="Primary">
-        <a class="brand" href="#/batches" aria-label="DigiBank onboarding console, home" data-label="DigiBank onboarding console">
-            <span class="brand__mark" aria-hidden="true">DB</span>
-            <span class="brand__text">
-                <span class="brand__name">DigiBank</span>
-                <span class="brand__sub">Bulk Onboarding Console</span>
-            </span>
-        </a>
+    <nav aria-label="Primary" class="sidebar" id="sidebar">
+        <div class="sidebar__header">
+            <a aria-label="DigiBank onboarding console, home" class="brand" data-label="DigiBank onboarding console"
+               href="#/batches">
+                <span aria-hidden="true" class="brand__mark">DB</span>
+                <span class="brand__text">
+                    <span class="brand__name">DigiBank</span>
+                    <span class="brand__sub">Bulk Onboarding Console</span>
+                </span>
+            </a>
+            <button aria-controls="sidebar" aria-expanded="true" aria-label="Collapse sidebar" class="nav-toggle nav-toggle--sidebar"
+                    type="button">
+                <svg aria-hidden="true" class="icon icon--lg">
+                    <use href="#i-panel"/>
+                </svg>
+            </button>
+        </div>
 
         <div class="sidebar__cta">
-            <a class="btn btn--primary" href="#/batches/new" data-label="New batch">
-                <svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>
+            <a class="btn btn--primary" data-label="New batch" href="#/batches/new">
+                <svg aria-hidden="true" class="icon">
+                    <use href="#i-plus"/>
+                </svg>
                 <span class="sidebar__cta-label">New batch</span>
             </a>
         </div>
@@ -78,22 +193,28 @@
         <p class="nav-section" id="nav-workspace">Workspace</p>
         <ul aria-labelledby="nav-workspace">
             <li>
-                <a class="nav-item" href="#/batches" data-nav="batches" data-label="Upload batches">
-                    <svg class="icon" aria-hidden="true"><use href="#i-layers"/></svg>
+                <a class="nav-item" data-label="Upload batches" data-nav="batches" href="#/batches">
+                    <svg aria-hidden="true" class="icon">
+                        <use href="#i-layers"/>
+                    </svg>
                     <span class="nav-item__label">Upload batches</span>
                     <span class="nav-item__count" hidden></span>
                 </a>
             </li>
             <li>
-                <a class="nav-item" href="#/members" data-nav="members" data-label="Onboarded members">
-                    <svg class="icon" aria-hidden="true"><use href="#i-users"/></svg>
+                <a class="nav-item" data-label="Onboarded members" data-nav="members" href="#/members">
+                    <svg aria-hidden="true" class="icon">
+                        <use href="#i-users"/>
+                    </svg>
                     <span class="nav-item__label">Onboarded members</span>
                     <span class="nav-item__count" hidden></span>
                 </a>
             </li>
             <li>
-                <a class="nav-item" href="#/template" data-nav="template" data-label="Workbook template">
-                    <svg class="icon" aria-hidden="true"><use href="#i-sheet"/></svg>
+                <a class="nav-item" data-label="Workbook template" data-nav="template" href="#/template">
+                    <svg aria-hidden="true" class="icon">
+                        <use href="#i-sheet"/>
+                    </svg>
                     <span class="nav-item__label">Workbook template</span>
                     <span class="nav-item__count" hidden></span>
                 </a>
@@ -101,22 +222,19 @@
         </ul>
     </nav>
 
-    <div class="nav-backdrop" aria-hidden="true"></div>
+    <div aria-hidden="true" class="nav-backdrop"></div>
 
     <div class="main">
         <header class="topbar">
-            <button class="icon-btn nav-toggle" type="button" aria-controls="sidebar" aria-expanded="true" aria-label="Collapse sidebar">
-                <svg class="icon icon--lg" aria-hidden="true"><use href="#i-menu"/></svg>
+            <button aria-controls="sidebar" aria-expanded="false" aria-label="Open navigation"
+                    class="icon-btn nav-toggle nav-toggle--topbar" type="button">
+                <svg aria-hidden="true" class="icon icon--lg">
+                    <use href="#i-menu"/>
+                </svg>
             </button>
-            <nav class="breadcrumb grow" aria-label="Breadcrumb">
+            <nav aria-label="Breadcrumb" class="breadcrumb grow">
                 <ol></ol>
             </nav>
-            <form class="topbar__search" role="search" action="#/batches">
-                <div class="input-icon">
-                    <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
-                    <input class="input" type="search" name="q" placeholder="Find a batch by name" aria-label="Find a batch by name" aria-keyshortcuts="/">
-                </div>
-            </form>
         </header>
 
         <main class="content" id="main" tabindex="-1">
@@ -125,46 +243,328 @@
     </div>
 </div>
 
-<div class="toasts" aria-live="polite" aria-relevant="additions"></div>
+<div aria-live="polite" aria-relevant="additions" class="toasts"></div>
 
 <template id="tpl-batches">
     <div class="page-header">
         <div class="page-header__titles">
             <div class="page-header__title"><h1>Upload batches</h1></div>
-            <p class="page-header__sub">Spreadsheet batches submitted for digital banking enrolment. Validation never onboards members; only a commit does.</p>
+            <p class="page-header__sub">Spreadsheet batches submitted for digital banking enrolment. Validation never
+                onboards members; only a commit does.</p>
         </div>
         <div class="page-header__actions">
             <a class="btn btn--primary" href="#/batches/new">
-                <svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>
+                <svg aria-hidden="true" class="icon">
+                    <use href="#i-plus"/>
+                </svg>
                 New batch
             </a>
         </div>
     </div>
-    <section class="card" data-slot="panel" aria-label="Upload batches">
-        <div class="tabs" role="tablist" aria-label="Filter batches by stage">
-            <button class="tab" type="button" role="tab" data-tab="all" aria-controls="batches-table">All <span class="tab__count" hidden></span></button>
-            <button class="tab" type="button" role="tab" data-tab="review" aria-controls="batches-table">Needs review <span class="tab__count" hidden></span></button>
-            <button class="tab" type="button" role="tab" data-tab="progress" aria-controls="batches-table">In progress <span class="tab__count" hidden></span></button>
-            <button class="tab" type="button" role="tab" data-tab="committed" aria-controls="batches-table">Committed <span class="tab__count" hidden></span></button>
-            <button class="tab" type="button" role="tab" data-tab="failed" aria-controls="batches-table">Failed <span class="tab__count" hidden></span></button>
-            <button class="icon-btn tabs__aside" type="button" aria-label="Refresh" title="Refresh" data-slot="refresh">
-                <svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg>
+    <section aria-label="Upload batches" class="card card--fill" data-slot="panel">
+        <div aria-label="Filter batches by stage" class="tabs" role="tablist">
+            <button aria-controls="batches-table" class="tab" data-tab="all" role="tab" type="button">All <span
+                    class="tab__count" hidden></span></button>
+            <button aria-controls="batches-table" class="tab" data-tab="review" role="tab" type="button">Needs review
+                <span class="tab__count" hidden></span></button>
+            <button aria-controls="batches-table" class="tab" data-tab="progress" role="tab" type="button">In progress
+                <span class="tab__count" hidden></span></button>
+            <button aria-controls="batches-table" class="tab" data-tab="committed" role="tab" type="button">Committed
+                <span class="tab__count" hidden></span></button>
+            <button aria-controls="batches-table" class="tab" data-tab="failed" role="tab" type="button">Failed <span
+                    class="tab__count" hidden></span></button>
+            <button aria-label="Refresh" class="icon-btn tabs__aside" data-slot="refresh" title="Refresh" type="button">
+                <svg aria-hidden="true" class="icon">
+                    <use href="#i-refresh"/>
+                </svg>
             </button>
         </div>
-        <div id="batches-table" role="tabpanel" data-slot="table"></div>
+        <div data-slot="table" id="batches-table" role="tabpanel"></div>
     </section>
 </template>
 
-<template id="tpl-pending">
+<template id="tpl-new-batch">
     <div class="page-header">
         <div class="page-header__titles">
-            <div class="page-header__title"><h1 data-slot="title"></h1></div>
-            <p class="page-header__sub" data-slot="subtitle"></p>
+            <div class="page-header__title"><h1 data-slot="title">New batch</h1></div>
+            <p class="page-header__sub" data-slot="subtitle">Name the batch, then upload the completed workbook.
+                Validation checks every row; nothing is onboarded until you commit.</p>
+        </div>
+        <div class="page-header__actions">
+            <button class="btn btn--secondary" data-slot="template" type="button">
+                <svg aria-hidden="true" class="icon">
+                    <use href="#i-download"/>
+                </svg>
+                Download template
+            </button>
         </div>
     </div>
-    <div class="state">
-        <svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>
-        <p class="state__title">This view is not built yet.</p>
+    <div class="split split--wide">
+        <form aria-labelledby="new-batch-details" class="card" data-slot="form" novalidate>
+            <div class="card__header"><h2 id="new-batch-details">Batch details</h2></div>
+            <div class="card__body">
+                <div data-slot="fields"></div>
+                <div class="cluster form-actions">
+                    <button class="btn btn--primary" data-slot="submit" type="submit">
+                        <svg aria-hidden="true" class="icon">
+                            <use href="#i-upload"/>
+                        </svg>
+                        <span data-slot="submit-label">Upload and validate</span>
+                    </button>
+                    <a class="btn btn--ghost" href="#/batches">Back to batches</a>
+                </div>
+            </div>
+        </form>
+
+        <section aria-labelledby="new-batch-progress" class="card">
+            <div class="card__header">
+                <h2 class="grow" id="new-batch-progress">Progress</h2>
+                <span class="badge" data-slot="connection" hidden></span>
+            </div>
+            <div class="card__body stack">
+                <ol class="stepper">
+                    <li class="stepper__item" data-step="upload">Upload</li>
+                    <li class="stepper__item" data-step="verify">Verify</li>
+                    <li class="stepper__item" data-step="validate">Validate</li>
+                </ol>
+                <div class="alert" data-slot="notice" hidden role="status">
+                    <svg aria-hidden="true" class="icon">
+                        <use data-slot="notice-icon"/>
+                    </svg>
+                    <div class="alert__body">
+                        <p class="alert__title" data-slot="notice-title"></p>
+                        <p data-slot="notice-text"></p>
+                        <ul class="notice-list" data-slot="notice-list" hidden></ul>
+                        <div class="alert__actions">
+                            <a class="btn btn--primary btn--sm" data-slot="review" hidden>Review results</a>
+                            <a class="btn btn--secondary btn--sm" data-slot="restart" hidden href="#/batches/new">Start
+                                a new batch</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="meter">
+                    <div class="meter__head"><span>Upload</span><span class="num"
+                                                                      data-slot="upload-text">Not started</span></div>
+                    <div aria-label="Upload progress" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0"
+                         class="progress" data-slot="upload-bar" role="progressbar">
+                        <div class="progress__bar"></div>
+                    </div>
+                </div>
+                <div class="meter">
+                    <div class="meter__head"><span>Validation</span><span class="num" data-slot="validate-text">Not started</span>
+                    </div>
+                    <div aria-label="Validation progress" aria-valuemax="100" aria-valuemin="0"
+                         aria-valuenow="0" class="progress progress--info" data-slot="validate-bar" role="progressbar">
+                        <div class="progress__bar"></div>
+                    </div>
+                </div>
+                <dl class="tally">
+                    <div class="tally__item tally__item--success">
+                        <dt>Valid</dt>
+                        <dd class="num" data-slot="count-valid">0</dd>
+                    </div>
+                    <div class="tally__item tally__item--danger">
+                        <dt>Invalid</dt>
+                        <dd class="num" data-slot="count-invalid">0</dd>
+                    </div>
+                    <div class="tally__item tally__item--warning">
+                        <dt>Duplicate</dt>
+                        <dd class="num" data-slot="count-duplicate">0</dd>
+                    </div>
+                </dl>
+                <div>
+                    <h3 class="overline">Activity</h3>
+                    <ol aria-label="Activity" class="timeline" data-slot="log"></ol>
+                </div>
+            </div>
+        </section>
+    </div>
+</template>
+
+<template id="tpl-template">
+    <div class="page-header">
+        <div class="page-header__titles">
+            <div class="page-header__title"><h1>Workbook template</h1></div>
+            <p class="page-header__sub">The blank XLSX workbook that every batch must use.</p>
+        </div>
+        <div class="page-header__actions">
+            <button class="btn btn--primary" data-slot="download" type="button">
+                <svg aria-hidden="true" class="icon">
+                    <use href="#i-download"/>
+                </svg>
+                Download template
+            </button>
+        </div>
+    </div>
+    <section aria-labelledby="template-columns" class="card">
+        <div class="card__header"><h2 id="template-columns">Columns</h2></div>
+        <div class="card__body">
+            <dl class="dl">
+                <dt>first_name, last_name</dt>
+                <dd>Required.</dd>
+                <dt>date_of_birth</dt>
+                <dd>Required, as YYYY-MM-DD.</dd>
+                <dt>email</dt>
+                <dd>Required.</dd>
+                <dt>branch</dt>
+                <dd>Required.</dd>
+                <dt>account_type</dt>
+                <dd>Required, for example personal or business.</dd>
+                <dt>member_number, phone_number, id_number</dt>
+                <dd>At least one is required. It is used to find the member in core banking.</dd>
+            </dl>
+        </div>
+    </section>
+</template>
+
+<template id="tpl-batch">
+    <div class="page-header">
+        <div class="page-header__titles">
+            <div class="page-header__title"><h1 data-slot="name"></h1><span data-slot="status"></span></div>
+            <p class="page-header__sub" data-slot="description"></p>
+        </div>
+        <div class="page-header__actions">
+            <button class="btn btn--secondary" data-slot="rejected" hidden type="button">
+                <svg aria-hidden="true" class="icon">
+                    <use href="#i-download"/>
+                </svg>
+                Rejected rows (.xlsx)
+            </button>
+            <span class="muted export-hint" data-slot="export-hint">Choose a status tab to export</span>
+            <button class="btn btn--secondary" data-slot="export-csv" type="button">
+                <svg aria-hidden="true" class="icon">
+                    <use href="#i-download"/>
+                </svg>
+                Export CSV
+            </button>
+            <button class="btn btn--secondary" data-slot="export-xlsx" type="button">
+                <svg aria-hidden="true" class="icon">
+                    <use href="#i-sheet"/>
+                </svg>
+                Export Excel
+            </button>
+        </div>
+    </div>
+
+    <dl class="meta-strip" data-slot="meta"></dl>
+
+    <div class="alert" data-slot="notice" hidden role="status">
+        <svg aria-hidden="true" class="icon">
+            <use data-slot="notice-icon"/>
+        </svg>
+        <div class="alert__body">
+            <p class="alert__title" data-slot="notice-title"></p>
+            <p data-slot="notice-text"></p>
+            <div class="alert__actions"><a class="btn btn--secondary btn--sm" data-slot="notice-link" hidden></a></div>
+        </div>
+    </div>
+
+    <div class="review">
+        <dl class="tally tally--four">
+            <div class="tally__item tally__item--success">
+                <dt>Valid</dt>
+                <dd class="num" data-slot="count-valid">0</dd>
+            </div>
+            <div class="tally__item tally__item--danger">
+                <dt>Invalid</dt>
+                <dd class="num" data-slot="count-invalid">0</dd>
+            </div>
+            <div class="tally__item tally__item--warning">
+                <dt>Duplicate</dt>
+                <dd class="num" data-slot="count-duplicate">0</dd>
+            </div>
+            <div class="tally__item">
+                <dt>Onboarded</dt>
+                <dd class="num" data-slot="count-onboarded">0</dd>
+            </div>
+        </dl>
+        <form aria-labelledby="commit-title" class="card commit" data-slot="commit" hidden novalidate>
+            <div class="card__body stack">
+                <h2 id="commit-title">Commit valid rows</h2>
+                <div data-slot="commit-fields"></div>
+                <div class="cluster">
+                    <button class="btn btn--primary" data-slot="commit-button" type="submit">
+                        <svg aria-hidden="true" class="icon">
+                            <use href="#i-shieldCheck"/>
+                        </svg>
+                        <span data-slot="commit-label">Commit valid rows</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <section aria-label="Batch records" class="card card--fill">
+        <div aria-label="Filter records by status" class="tabs" role="tablist">
+            <button aria-controls="batch-records" class="tab" data-tab="all" role="tab" type="button">All <span
+                    class="tab__count" hidden></span></button>
+            <button aria-controls="batch-records" class="tab" data-tab="valid" role="tab" type="button">Valid <span
+                    class="tab__count" hidden></span></button>
+            <button aria-controls="batch-records" class="tab" data-tab="invalid" role="tab" type="button">Invalid <span
+                    class="tab__count" hidden></span></button>
+            <button aria-controls="batch-records" class="tab" data-tab="duplicate" role="tab" type="button">Duplicate
+                <span class="tab__count" hidden></span></button>
+            <button aria-controls="batch-records" class="tab" data-tab="onboarded" role="tab" type="button">Onboarded
+                <span class="tab__count" hidden></span></button>
+        </div>
+        <div data-slot="table" id="batch-records" role="tabpanel"></div>
+    </section>
+</template>
+
+<template id="tpl-members">
+    <div class="page-header">
+        <div class="page-header__titles">
+            <div class="page-header__title"><h1>Onboarded members</h1></div>
+            <p class="page-header__sub">Members whose onboarding the API has confirmed. Rows from a batch appear here
+                only after it is committed.</p>
+        </div>
+    </div>
+    <section aria-label="Onboarded members" class="card card--fill">
+        <div data-slot="table"></div>
+    </section>
+</template>
+
+<template id="tpl-member">
+    <div class="page-header">
+        <div class="page-header__titles">
+            <div class="page-header__title"><h1 data-slot="name"></h1><span
+                    class="badge badge--success-solid">Onboarded</span></div>
+            <p class="page-header__sub"><span data-slot="onboarded"></span> from <a data-slot="batch">its batch</a></p>
+        </div>
+    </div>
+    <div class="split split--wide">
+        <section aria-labelledby="member-details-title" class="card">
+            <div class="card__header"><h2 id="member-details-title">Member details</h2></div>
+            <div class="card__body">
+                <dl class="dl" data-slot="details"></dl>
+            </div>
+        </section>
+        <section aria-labelledby="member-core-title" class="card">
+            <div class="card__header"><h2 id="member-core-title">Core banking</h2></div>
+            <div class="card__body stack">
+                <p class="muted">Look the member up in core banking by member number and compare the details.</p>
+                <div class="cluster">
+                    <button class="btn btn--secondary" data-slot="check" type="button">
+                        <svg aria-hidden="true" class="icon">
+                            <use href="#i-shieldCheck"/>
+                        </svg>
+                        Check against core banking
+                    </button>
+                </div>
+                <div data-slot="result"></div>
+            </div>
+        </section>
+    </div>
+</template>
+
+<template id="tpl-load-error">
+    <div class="state state--error" role="alert">
+        <svg aria-hidden="true" class="icon">
+            <use href="#i-alert"/>
+        </svg>
+        <p class="state__title" data-slot="title"></p>
+        <p data-slot="message"></p>
+        <div class="cluster"><a class="btn btn--secondary" href="#/batches">Go to upload batches</a></div>
     </div>
 </template>
 
@@ -175,7 +575,9 @@
         </div>
     </div>
     <div class="state">
-        <svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg>
+        <svg aria-hidden="true" class="icon">
+            <use href="#i-alert"/>
+        </svg>
         <p class="state__title">There is nothing at this address.</p>
         <div class="cluster"><a class="btn btn--secondary" href="#/batches">Go to upload batches</a></div>
     </div>
@@ -183,13 +585,17 @@
 
 <template id="tpl-toast">
     <div class="alert toast">
-        <svg class="icon" aria-hidden="true"><use data-slot="icon"/></svg>
+        <svg aria-hidden="true" class="icon">
+            <use data-slot="icon"/>
+        </svg>
         <div class="alert__body">
             <p class="alert__title" data-slot="title"></p>
             <p data-slot="message"></p>
         </div>
-        <button class="icon-btn" type="button" aria-label="Dismiss notification" data-action="dismiss">
-            <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+        <button aria-label="Dismiss notification" class="icon-btn" data-action="dismiss" type="button">
+            <svg aria-hidden="true" class="icon">
+                <use href="#i-x"/>
+            </svg>
         </button>
     </div>
 </template>

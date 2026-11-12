@@ -63,12 +63,12 @@
     /* Typography */
     --font-sans: 'Lato', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
-    --text-xs: 11px;    /* overline / caps labels */
-    --text-sm: 12px;    /* captions */
-    --text-md: 13px;    /* table cells, dense body */
-    --text-base: 14px;  /* body */
-    --text-lg: 15px;    /* section headings */
-    --text-xl: 20px;    /* page headings */
+    --text-xs: 11px; /* overline / caps labels */
+    --text-sm: 12px; /* captions */
+    --text-md: 13px; /* table cells, dense body */
+    --text-base: 14px; /* body */
+    --text-lg: 15px; /* section headings */
+    --text-xl: 20px; /* page headings */
     --text-kpi: 22px;
     --leading-tight: 1.25;
     --leading: 1.45;
@@ -97,8 +97,8 @@
     --control-h-sm: 24px;
     --row-h: 32px;
     --icon-size: 16px;
-    --sidebar-w: 220px;
-    --sidebar-rail-w: 60px;
+    --sidebar-w: 256px;
+    --sidebar-rail-w: 64px;
     --topbar-h: 48px;
     --dialog-w: 560px;
     --dialog-w-lg: 760px;

@@ -40,7 +40,7 @@ Use the supplied OpenAPI specification and its examples as the source of truth.
 
 ## Walkthrough
 
-Demonstrate the interface using a batch named **“Riverside Branch — October Enrolment”** with a short description. The workbook should contain eligible members, duplicate entries, and members whose details do not match core banking.
+Demonstrate the interface using a batch named **“Riverside Branch - October Enrolment”** with a short description. The workbook should contain eligible members, duplicate entries, and members whose details do not match core banking.
 
 Show how staff would:
 

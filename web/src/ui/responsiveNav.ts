@@ -33,7 +33,8 @@ function writeCollapsed(value: boolean): void {
 export function bindResponsiveNav(
     app: HTMLElement,
     sidebar: HTMLElement,
-    toggle: HTMLButtonElement,
+    /** The sidebar's collapse button and the header menu button; CSS shows whichever fits the layout. */
+    toggles: HTMLButtonElement[],
     backdrop: HTMLElement,
 ): ResponsiveNav {
     let collapsed = readCollapsed();
@@ -51,10 +52,13 @@ export function bindResponsiveNav(
         sidebar.inert = mode === 'phone' && !open;
 
         const expanded = mode === 'desktop' ? !collapsed : open;
-        toggle.setAttribute('aria-expanded', String(expanded));
-        toggle.setAttribute('aria-label', mode === 'desktop'
+        const label = mode === 'desktop'
             ? (collapsed ? 'Expand sidebar' : 'Collapse sidebar')
-            : (open ? 'Close navigation' : 'Open navigation'));
+            : (open ? 'Close navigation' : 'Open navigation');
+        for (const toggle of toggles) {
+            toggle.setAttribute('aria-expanded', String(expanded));
+            toggle.setAttribute('aria-label', label);
+        }
 
         for (const link of sidebar.querySelectorAll<HTMLElement>('[data-label]')) {
             if (rail) link.title = link.dataset.label ?? '';
@@ -67,18 +71,20 @@ export function bindResponsiveNav(
         open = value;
         apply();
         if (open) sidebar.querySelector<HTMLElement>('a[aria-current="page"], a.nav-item')?.focus();
-        else if (restoreFocus) toggle.focus();
+        else if (restoreFocus) toggles.find((toggle) => toggle.offsetParent !== null)?.focus();
     }
 
-    toggle.addEventListener('click', () => {
-        if (layout() === 'desktop') {
-            collapsed = !collapsed;
-            writeCollapsed(collapsed);
-            apply();
-        } else {
-            setOpen(!open);
-        }
-    });
+    for (const toggle of toggles) {
+        toggle.addEventListener('click', () => {
+            if (layout() === 'desktop') {
+                collapsed = !collapsed;
+                writeCollapsed(collapsed);
+                apply();
+            } else {
+                setOpen(!open);
+            }
+        });
+    }
     backdrop.addEventListener('click', () => setOpen(false));
     sidebar.addEventListener('click', (event) => {
         if (open && (event.target as Element).closest('a')) setOpen(false, {restoreFocus: false});

@@ -1,7 +1,8 @@
-import {$, el, isTyping, replace} from './dom.js';
+import {$, el, replace} from './dom.js';
 import {bindResponsiveNav} from './ui/responsiveNav.js';
 
 export type NavKey = 'batches' | 'members' | 'template';
+
 export interface Crumb {
     label: string;
     href?: string;
@@ -9,11 +10,16 @@ export interface Crumb {
 
 export interface Shell {
     outlet: HTMLElement;
+
     setActive(key: NavKey | null): void;
+
     setBreadcrumb(items: Crumb[]): void;
+
+    /** Replaces the last breadcrumb, for pages that learn their name after loading. */
+    setPageLabel(label: string): void;
+
     setNavCount(key: NavKey, count: number | null): void;
-    /** Hook for the template download, wired once that endpoint is integrated. */
-    onTemplate(handler: () => void): void;
+
     /** Closes the mobile/tablet navigation overlay. */
     closeNav(): void;
 }
@@ -24,37 +30,16 @@ export function bindShell(): Shell {
     const sidebar = $('#sidebar');
     const outlet = $('#main');
     const crumbs = $('.breadcrumb ol');
-    const searchForm = $<HTMLFormElement>('.topbar__search');
-    const search = $<HTMLInputElement>('input[name="q"]', searchForm);
     const links = new Map<string, HTMLAnchorElement>();
     for (const link of sidebar.querySelectorAll<HTMLAnchorElement>('a[data-nav]')) links.set(link.dataset.nav ?? '', link);
-    let templateHandler: (() => void) | null = null;
 
     $('[data-skip-link]').addEventListener('click', (event) => {
         event.preventDefault();
         outlet.focus();
     });
 
-    links.get('template')?.addEventListener('click', (event) => {
-        if (!templateHandler) return;
-        event.preventDefault();
-        templateHandler();
-    });
-
-    searchForm.addEventListener('submit', (event) => {
-        event.preventDefault();
-        const term = search.value.trim();
-        location.hash = term ? `#/batches?search=${encodeURIComponent(term)}` : '#/batches';
-    });
-
-    document.addEventListener('keydown', (event) => {
-        if (event.key === '/' && !event.ctrlKey && !event.metaKey && !isTyping(event.target) && searchForm.offsetParent) {
-            event.preventDefault();
-            search.focus();
-        }
-    });
-
-    const nav = bindResponsiveNav(app, sidebar, $<HTMLButtonElement>('.nav-toggle'), $('.nav-backdrop'));
+    const toggles = [...document.querySelectorAll<HTMLButtonElement>('.nav-toggle')];
+    const nav = bindResponsiveNav(app, sidebar, toggles, $('.nav-backdrop'));
 
     return {
         outlet,
@@ -63,6 +48,11 @@ export function bindShell(): Shell {
                 if (k === key) link.setAttribute('aria-current', 'page');
                 else link.removeAttribute('aria-current');
             }
+        },
+        setPageLabel(label) {
+            const last = crumbs.querySelector('li:last-child span');
+            if (last) last.textContent = label;
+            document.title = `${label} - DigiBank Onboarding`;
         },
         setBreadcrumb(items) {
             replace(crumbs, items.map((item, i) => {
@@ -78,9 +68,6 @@ export function bindShell(): Shell {
             if (!node) return;
             node.hidden = count === null;
             node.textContent = count === null ? '' : count.toLocaleString();
-        },
-        onTemplate(handler) {
-            templateHandler = handler;
         },
         closeNav: () => nav.close(),
     };

@@ -25,3 +25,13 @@ export function items(parent: Element, name: string): Element[] {
     const list = child(parent, name);
     return list ? [...list.children].filter((node) => node.tagName === 'item') : [];
 }
+
+const ESCAPES: Record<string, string> = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;'};
+
+/** Serialises a flat request body such as <upload_request>; values are escaped. */
+export function xmlDocument(root: string, fields: Record<string, string | number | boolean>): string {
+    const body = Object.entries(fields)
+        .map(([name, value]) => `<${name}>${String(value).replace(/[&<>"']/g, (c) => ESCAPES[c] ?? c)}</${name}>`)
+        .join('');
+    return `<${root}>${body}</${root}>`;
+}

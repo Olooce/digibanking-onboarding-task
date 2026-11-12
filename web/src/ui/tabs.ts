@@ -1,5 +1,6 @@
 export interface Tabs {
     select(id: string): void;
+
     setCount(id: string, count: number | null): void;
 }
 
@@ -25,7 +26,12 @@ export function bindTabs(list: HTMLElement, onChange: (id: string) => void): Tab
     list.addEventListener('keydown', (event) => {
         const index = tabs.indexOf(event.target as HTMLButtonElement);
         if (index < 0) return;
-        const steps: Record<string, number> = {ArrowRight: index + 1, ArrowLeft: index - 1, Home: 0, End: tabs.length - 1};
+        const steps: Record<string, number> = {
+            ArrowRight: index + 1,
+            ArrowLeft: index - 1,
+            Home: 0,
+            End: tabs.length - 1
+        };
         const nextIndex = steps[event.key];
         if (nextIndex === undefined) return;
         event.preventDefault();
