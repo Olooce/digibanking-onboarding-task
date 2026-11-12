@@ -23,6 +23,9 @@ function statusScope(statuses: UploadStatus[]): string {
     return anyOf(statuses.map((status) => `status eq ${literal(status)}`));
 }
 
+const LIVE_STATUSES = ['created', 'uploading', 'uploaded', 'validating', 'committing'];
+const LIVE_REFRESH_MS = 3000;
+
 const SCOPES: Record<string, string | null> = {
     all: null,
     review: statusScope(['validated', 'validated_with_errors']),
@@ -145,9 +148,23 @@ export function batchesPage(shell: Shell): Page {
             }));
         }
 
+        // The list has no event stream, so while a visible batch is still being worked on it is reloaded every few seconds.
+        let liveTimer: ReturnType<typeof setTimeout> | undefined;
+
+        function refreshWhileInProgress(rows: Upload[]): void {
+            clearTimeout(liveTimer);
+            if (!rows.some((row) => LIVE_STATUSES.includes(row.status))) return;
+            liveTimer = setTimeout(() => {
+                void table.refresh();
+                void refreshCounts();
+            }, LIVE_REFRESH_MS);
+        }
+
         async function load(tableQuery: Query): Promise<{ rows: Upload[]; total: number }> {
             try {
-                return await listUploads(toODataParams(tableQuery, SCHEMA, SCOPES[activeTab] ?? null), tableQuery.signal);
+                const page = await listUploads(toODataParams(tableQuery, SCHEMA, SCOPES[activeTab] ?? null), tableQuery.signal);
+                refreshWhileInProgress(page.rows);
+                return page;
             } catch (error) {
                 if (error instanceof DOMException && error.name === 'AbortError') throw error;
                 throw new Error(describeError(error).detail);
@@ -194,6 +211,9 @@ export function batchesPage(shell: Shell): Page {
             void refreshCounts();
         });
         void refreshCounts();
-        return () => table.destroy();
+        return () => {
+            clearTimeout(liveTimer);
+            table.destroy();
+        };
     };
 }

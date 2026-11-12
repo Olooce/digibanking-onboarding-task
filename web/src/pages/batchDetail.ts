@@ -12,6 +12,7 @@ import {type ColumnConfig, createDataTable, type Query} from '../ui/dataTable.js
 import {bindDownloadButton} from '../ui/downloadButton.js';
 import {createFormFields, type FieldConfig} from '../ui/form.js';
 import {bindTabs} from '../ui/tabs.js';
+import {watchUploadEvents} from '../upload/events.js';
 
 const RECORD_COLUMNS: ColumnConfig<UploadRecord>[] = [
     {key: 'row_number', label: 'Row', ...NUMBER_FILTER, accessor: (row) => row.rowNumber},
@@ -64,6 +65,11 @@ const COMMIT_FIELDS: FieldConfig[] = [
 const TABS = ['all', 'valid', 'invalid', 'duplicate', 'onboarded'];
 const COMMITTABLE = ['validated', 'validated_with_errors'];
 const IN_PROGRESS = ['created', 'uploading', 'uploaded', 'validating'];
+/** While the batch is in one of these states its rows are still changing, so the page follows its events. */
+const LIVE_STATUSES = [...IN_PROGRESS, 'committing'];
+const ROW_EVENTS = ['processing_started', 'row_processed', 'row_committed'];
+const FINAL_EVENTS = ['validation_completed', 'commit_completed', 'failed'];
+const LIVE_REFRESH_MS = 1000;
 
 export function batchDetailPage(shell: Shell): Page {
     return async ({outlet, params, signal}) => {
@@ -146,7 +152,7 @@ export function batchDetailPage(shell: Shell): Page {
             if (!countsLoaded || commitResultShown) return;
             notice.hidden = true;
             if (IN_PROGRESS.includes(batch.status)) {
-                showNotice('info', 'This batch is not ready for review', 'The upload or validation has not finished yet.', {
+                showNotice('info', 'Validation in progress', 'Rows update here as they are checked. Review and commit once validation finishes.', {
                     href: `#/batches/new?resume=${encodeURIComponent(batch.id)}`,
                     label: 'Follow progress'
                 });
@@ -226,6 +232,40 @@ export function batchDetailPage(shell: Shell): Page {
         outlet.append(view);
         renderBatch();
 
+        async function reloadBatch(): Promise<void> {
+            try {
+                batch = await getUpload(uploadId, signal);
+                renderBatch();
+            } catch {
+                // The table's own error state reports a lost connection.
+            }
+            void table.refresh();
+        }
+
+        // Rows change many times a second during validation, so the table is refreshed at most once a second.
+        let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+        signal.addEventListener('abort', () => clearTimeout(refreshTimer), {once: true});
+
+        function followLiveChanges(): void {
+            watchUploadEvents(uploadId, {
+                onConnection() {
+                    // Missed events are replayed after a reconnect, so nothing is needed here.
+                },
+                onEvent(type) {
+                    if (FINAL_EVENTS.includes(type)) {
+                        clearTimeout(refreshTimer);
+                        refreshTimer = undefined;
+                        void reloadBatch();
+                    } else if (ROW_EVENTS.includes(type) && refreshTimer === undefined) {
+                        refreshTimer = setTimeout(() => {
+                            refreshTimer = undefined;
+                            void reloadBatch();
+                        }, LIVE_REFRESH_MS);
+                    }
+                },
+            }, signal);
+        }
+
         const table = createDataTable<UploadRecord>({
             container: host,
             label: 'Batch records',
@@ -237,6 +277,7 @@ export function batchDetailPage(shell: Shell): Page {
             sorts: [{field: 'row_number', dir: 'asc'}],
             emptyMessage: 'No rows in this view.',
         });
+        if (LIVE_STATUSES.includes(batch.status)) followLiveChanges();
         return () => table.destroy();
     };
 }
