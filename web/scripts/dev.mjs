@@ -11,7 +11,10 @@ if (spawnSync(process.execPath, ['scripts/env.mjs'], {cwd: webDir, stdio: 'inher
 assemble({clean: true});
 
 const children = [
-    spawn(process.execPath, [tscBin, '-p', 'tsconfig.json', '--watch', '--preserveWatchOutput'], {cwd: webDir, stdio: 'inherit'}),
+    spawn(process.execPath, [tscBin, '-p', 'tsconfig.json', '--watch', '--preserveWatchOutput'], {
+        cwd: webDir,
+        stdio: 'inherit'
+    }),
     spawn(process.execPath, ['scripts/serve.mjs'], {cwd: webDir, stdio: 'inherit'}),
 ];
 

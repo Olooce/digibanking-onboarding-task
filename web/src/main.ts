@@ -1,6 +1,10 @@
 import {fromTemplate} from './dom.js';
+import {batchDetailPage} from './pages/batchDetail.js';
 import {batchesPage} from './pages/batches.js';
-import {pendingPage} from './pages/pending.js';
+import {memberDetailPage} from './pages/memberDetail.js';
+import {membersPage} from './pages/members.js';
+import {newBatchPage} from './pages/newBatch.js';
+import {templatePage} from './pages/template.js';
 import {createRouter, type Page} from './router.js';
 import {bindShell, type Crumb, type NavKey} from './shell.js';
 
@@ -28,11 +32,17 @@ const notFound: Page = ({outlet}) => {
 const router = createRouter([
     {path: '/', page: () => router.navigate('/batches', {replace: true})},
     {path: '/batches', page: view('batches', [HOME, {label: 'Upload batches'}], batchesPage(shell))},
-    {path: '/batches/new', page: view('batches', [HOME, BATCHES, {label: 'New batch'}], pendingPage('New batch', 'Name the batch, then upload the completed workbook.'))},
-    {path: '/batches/:id', page: view('batches', [HOME, BATCHES, {label: 'Batch'}], pendingPage('Batch', 'Validation results and commit.'))},
-    {path: '/members', page: view('members', [HOME, {label: 'Onboarded members'}], pendingPage('Onboarded members', 'Members whose onboarding has been confirmed.'))},
-    {path: '/members/:id', page: view('members', [HOME, MEMBERS, {label: 'Member'}], pendingPage('Member', 'Member details.'))},
-    {path: '/template', page: view('template', [HOME, {label: 'Workbook template'}], pendingPage('Workbook template', 'Download the blank XLSX template.'))},
-], shell.outlet, {fallback: notFound, onRoute: () => shell.closeNav()});
+    {path: '/batches/new', page: view('batches', [HOME, BATCHES, {label: 'New batch'}], newBatchPage)},
+    {path: '/batches/:id', page: view('batches', [HOME, BATCHES, {label: 'Batch'}], batchDetailPage(shell))},
+    {path: '/members', page: view('members', [HOME, {label: 'Onboarded members'}], membersPage(shell))},
+    {path: '/members/:id', page: view('members', [HOME, MEMBERS, {label: 'Member'}], memberDetailPage(shell))},
+    {path: '/template', page: view('template', [HOME, {label: 'Workbook template'}], templatePage)},
+], shell.outlet, {
+    fallback: notFound,
+    onRoute: () => {
+        shell.closeNav();
+        shell.outlet.scrollTop = 0;
+    },
+});
 
 router.start();

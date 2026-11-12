@@ -1,5 +1,5 @@
 import {$, fromTemplate, slot} from '../dom.js';
-import {setIcon, type IconName} from '../icons.js';
+import {type IconName, setIcon} from '../icons.js';
 
 export type Tone = 'info' | 'success' | 'warning' | 'danger';
 

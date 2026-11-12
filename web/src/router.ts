@@ -21,8 +21,11 @@ interface CompiledRoute extends RouteDef {
 
 export interface Router {
     start(): void;
+
     navigate(path: string, options?: { replace?: boolean }): void;
+
     current(): { path: string; query: URLSearchParams };
+
     refresh(): void;
 }
 
