@@ -1,5 +1,8 @@
 import {$, el, replace} from './dom.js';
+import {checkServer, onServerConnection} from './api/client.js';
 import {bindResponsiveNav} from './ui/responsiveNav.js';
+
+const HEALTH_CHECK_MS = 5000;
 
 export type NavKey = 'batches' | 'members' | 'template';
 
@@ -37,6 +40,47 @@ export function bindShell(): Shell {
         event.preventDefault();
         outlet.focus();
     });
+
+    // Offline: the browser has no network (DevTools' "Offline" switch does this too).
+    // Server unreachable: the network is up but the API does not answer, for example when it is stopped.
+    const connection = $('[data-connection]');
+    let serverReachable = true;
+    let healthTimer: ReturnType<typeof setTimeout> | undefined;
+
+    function showConnection(): void {
+        if (!navigator.onLine) {
+            connection.textContent = 'Offline';
+            connection.className = 'badge badge--danger';
+        } else if (!serverReachable) {
+            connection.textContent = 'Server unreachable';
+            connection.className = 'badge badge--warning';
+        } else {
+            connection.textContent = 'Online';
+            connection.className = 'badge badge--success';
+        }
+    }
+
+    // While the server is unreachable, ask its health endpoint every few seconds until it answers.
+    function checkUntilReachable(): void {
+        clearTimeout(healthTimer);
+        healthTimer = setTimeout(() => {
+            checkServer().catch(() => checkUntilReachable());
+        }, HEALTH_CHECK_MS);
+    }
+
+    onServerConnection((reachable) => {
+        if (reachable === serverReachable) return;
+        serverReachable = reachable;
+        showConnection();
+        if (reachable) clearTimeout(healthTimer);
+        else checkUntilReachable();
+    });
+    window.addEventListener('online', () => {
+        showConnection();
+        void checkServer().catch(() => undefined);
+    });
+    window.addEventListener('offline', showConnection);
+    showConnection();
 
     const toggles = [...document.querySelectorAll<HTMLButtonElement>('.nav-toggle')];
     const nav = bindResponsiveNav(app, sidebar, toggles, $('.nav-backdrop'));

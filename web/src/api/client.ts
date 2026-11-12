@@ -37,14 +37,28 @@ export function isNetworkError(error: unknown): boolean {
     return error instanceof ApiError && error.status === 0;
 }
 
+let connectionListener: ((reachable: boolean) => void) | null = null;
+
+/** Called after every request with whether the server answered, so the header can show it. */
+export function onServerConnection(listener: (reachable: boolean) => void): void {
+    connectionListener = listener;
+}
+
+/** Asks the API's health endpoint whether the server is up; throws ApiError when it cannot be reached. */
+export async function checkServer(): Promise<void> {
+    await requestXml('/health');
+}
+
 async function send(path: string, init: RequestInit): Promise<Response> {
     let response: Response;
     try {
         response = await fetch(apiUrl(path), init);
     } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') throw error;
+        connectionListener?.(false);
         throw new ApiError('No response from the service.', 0, 'NETWORK');
     }
+    connectionListener?.(true);
     if (!response.ok) {
         const failure = child(parseXml(await response.text()) ?? document.createElement('none'), 'error');
         if (failure) throw new ApiError(text(failure, 'message'), response.status, text(failure, 'code'));
