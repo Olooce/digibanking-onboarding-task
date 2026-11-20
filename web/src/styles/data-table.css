@@ -393,6 +393,16 @@ dialog.dialog::backdrop {
     background: var(--color-row-hover);
 }
 
+.dt-table tbody tr.dt-row--fresh {
+    animation: dt-row-fresh 1s ease-out;
+}
+
+@keyframes dt-row-fresh {
+    from {
+        background-color: var(--color-primary-soft);
+    }
+}
+
 .dt-null {
     color: var(--color-text-muted);
 }

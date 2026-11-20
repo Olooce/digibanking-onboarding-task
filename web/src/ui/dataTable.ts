@@ -8,6 +8,7 @@
  *   data: rowsArray | async (query) => ({ rows, total }),   // function = server mode
  *   rowId: (row) => row.id,
  *   rowLabel: (row) => row.title,       // used in "Actions for ..." label
+ *   rowClass: (row) => 'dt-row--fresh', // extra class on a row's <tr> (optional)
  *   rowActions: (row, table) => [{ label, onSelect(row) | href, danger, disabled, title, separatorBefore }],
  *   pageSizes: [10, 25, 50, 100], pageSize: 25,
  *   sorts: [{ field, dir: 'asc' | 'desc' }],  // initial sort (invalid config throws)
@@ -18,6 +19,7 @@
  *   onStateChange: (state) => {},
  * });
  * table.setRows(rows); table.refresh(); table.getState(); table.destroy();
+ * table.refresh({quiet: true})              // refetch without dimming the table, for live updates
  * table.setState(patch) -> { ok, errors }   // atomic: if anything is invalid nothing is applied and the
  *                                           // errors are shown to the user and returned
  *
@@ -133,6 +135,7 @@ export interface DataTableOptions<R> {
     data?: R[] | ((query: Query) => Promise<{ rows: R[]; total: number }>);
     rowId?: (row: R) => unknown;
     rowLabel?: (row: R) => string;
+    rowClass?: (row: R) => string | undefined;
     rowActions?: (row: R, table: DataTable<R>) => (RowAction<R> | null | undefined | false)[];
     pageSizes?: number[];
     pageSize?: number;
@@ -149,7 +152,8 @@ export interface DataTable<R> {
 
     setRows(rows: R[]): Promise<void>;
 
-    refresh(): Promise<void>;
+    /** Fetches the rows again. `quiet` keeps the table as it is while fetching (no dimming), for live updates. */
+    refresh(options?: { quiet?: boolean }): Promise<void>;
 
     getState(): TableState;
 
@@ -944,12 +948,14 @@ export function createDataTable<R>(options: DataTableOptions<R>): DataTable<R> {
         view.error = null;
     }
 
-    async function fetchServer(): Promise<boolean> {
+    async function fetchServer(quiet: boolean): Promise<boolean> {
         abortCtl?.abort();
         abortCtl = new AbortController();
         const mine = ++reqSeq;
-        view.loading = true;
-        renderBusy();
+        if (!quiet) {
+            view.loading = true;
+            renderBusy();
+        }
         try {
             const fetchRows = opts.data as (query: Query) => Promise<{ rows: R[]; total: number }>;
             const res = await fetchRows({
@@ -983,9 +989,9 @@ export function createDataTable<R>(options: DataTableOptions<R>): DataTable<R> {
 
     const totalPages = () => Math.max(1, Math.ceil(view.total / state.pageSize));
 
-    async function update(): Promise<void> {
+    async function update(quiet = false): Promise<void> {
         if (serverMode) {
-            if (!await fetchServer()) return;
+            if (!await fetchServer(quiet)) return;
         } else {
             computeClient();
         }
@@ -1272,7 +1278,7 @@ export function createDataTable<R>(options: DataTableOptions<R>): DataTable<R> {
                 }
                 cells.push(td);
             }
-            return el('tr', {'data-row-id': String(opts.rowId(row))}, cells);
+            return el('tr', {'data-row-id': String(opts.rowId(row)), class: opts.rowClass?.(row)}, cells);
         });
         tbody.append(...rows);
     }
@@ -1684,7 +1690,7 @@ export function createDataTable<R>(options: DataTableOptions<R>): DataTable<R> {
             source = Array.isArray(rows) ? rows : [];
             return update();
         },
-        refresh: () => update(),
+        refresh: (options) => update(options?.quiet ?? false),
         getState: snapshot,
         /** Atomic: if any part of the patch is invalid, nothing is applied, the errors are shown and returned. */
         setState(patch = {}) {

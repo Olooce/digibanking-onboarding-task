@@ -34,10 +34,13 @@ const SCOPES: Record<string, string | null> = {
     failed: statusScope(['failed']),
 };
 
-/** Unfinished uploads open where they can be resumed; the rest open the batch itself. */
+/**
+ * Unfinished uploads open where they can be resumed. Everything else, including a batch that is being
+ * validated, opens the batch itself, where its rows appear one by one as they are checked.
+ */
 function batchHref(row: Upload): string {
     const id = encodeURIComponent(row.id);
-    return ['created', 'uploading', 'uploaded', 'validating'].includes(row.status) ? `#/batches/new?resume=${id}` : `#/batches/${id}`;
+    return ['created', 'uploading', 'uploaded'].includes(row.status) ? `#/batches/new?resume=${id}` : `#/batches/${id}`;
 }
 
 /** Zero is shown as a muted dash so the non-zero counts stand out. */

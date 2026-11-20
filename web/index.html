@@ -296,8 +296,8 @@
     <div class="page-header">
         <div class="page-header__titles">
             <div class="page-header__title"><h1 data-slot="title">New batch</h1></div>
-            <p class="page-header__sub" data-slot="subtitle">Name the batch, then upload the completed workbook.
-                Validation checks every row; nothing is onboarded until you commit.</p>
+            <p class="page-header__sub" data-slot="subtitle">Add one or more completed workbooks. Each workbook
+                becomes its own batch. Validation checks every row; nothing is onboarded until you commit.</p>
         </div>
         <div class="page-header__actions">
             <button class="btn btn--secondary" data-slot="template" type="button">
@@ -311,8 +311,12 @@
     <div class="split split--wide">
         <form aria-labelledby="new-batch-details" class="card" data-slot="form" novalidate>
             <div class="card__header"><h2 id="new-batch-details">Batch details</h2></div>
-            <div class="card__body">
+            <div class="card__body stack">
                 <div data-slot="fields"></div>
+                <section aria-labelledby="new-batch-workbooks" class="stack" data-slot="jobs-section" hidden>
+                    <h3 class="overline" id="new-batch-workbooks">Workbooks</h3>
+                    <ul aria-labelledby="new-batch-workbooks" class="jobs" data-slot="jobs" role="list"></ul>
+                </section>
                 <div class="cluster form-actions">
                     <button class="btn btn--primary" data-slot="submit" type="submit">
                         <svg aria-hidden="true" class="icon">
@@ -331,11 +335,6 @@
                 <span class="badge" data-slot="connection" hidden></span>
             </div>
             <div class="card__body stack">
-                <ol class="stepper">
-                    <li class="stepper__item" data-step="upload">Upload</li>
-                    <li class="stepper__item" data-step="verify">Verify</li>
-                    <li class="stepper__item" data-step="validate">Validate</li>
-                </ol>
                 <div class="alert" data-slot="notice" hidden role="status">
                     <svg aria-hidden="true" class="icon">
                         <use data-slot="notice-icon"/>
@@ -343,29 +342,18 @@
                     <div class="alert__body">
                         <p class="alert__title" data-slot="notice-title"></p>
                         <p data-slot="notice-text"></p>
-                        <ul class="notice-list" data-slot="notice-list" hidden></ul>
                         <div class="alert__actions">
-                            <a class="btn btn--primary btn--sm" data-slot="review" hidden>Review results</a>
-                            <a class="btn btn--secondary btn--sm" data-slot="restart" hidden href="#/batches/new">Start
-                                a new batch</a>
+                            <a class="btn btn--primary btn--sm" data-slot="notice-link" hidden></a>
+                            <a class="btn btn--secondary btn--sm" data-slot="restart" hidden href="#/batches/new">Upload
+                                more workbooks</a>
                         </div>
                     </div>
                 </div>
                 <div class="meter">
-                    <div class="meter__head"><span>Upload</span><span class="num"
-                                                                      data-slot="upload-text">Not started</span></div>
-                    <div aria-label="Upload progress" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0"
-                         class="progress" data-slot="upload-bar" role="progressbar">
-                        <div class="progress__bar"></div>
-                    </div>
-                </div>
-                <div class="meter">
-                    <div class="meter__head"><span>Validation</span><span class="num" data-slot="validate-text">Not started</span>
-                    </div>
-                    <div aria-label="Validation progress" aria-valuemax="100" aria-valuemin="0"
-                         aria-valuenow="0" class="progress progress--info" data-slot="validate-bar" role="progressbar">
-                        <div class="progress__bar"></div>
-                    </div>
+                    <div class="meter__head"><span id="new-batch-finished">Batches finished</span><span
+                            class="num" data-slot="overall-text">Not started</span></div>
+                    <progress aria-labelledby="new-batch-finished" class="progress progress--success"
+                              data-slot="overall-bar" max="1" value="0"></progress>
                 </div>
                 <dl class="tally">
                     <div class="tally__item tally__item--success">
@@ -382,12 +370,72 @@
                     </div>
                 </dl>
                 <div>
-                    <h3 class="overline">Activity</h3>
-                    <ol aria-label="Activity" class="timeline" data-slot="log"></ol>
+                    <h3 class="overline" id="new-batch-activity">Activity</h3>
+                    <ol aria-labelledby="new-batch-activity" class="timeline" data-slot="log" role="list"></ol>
                 </div>
             </div>
         </section>
     </div>
+</template>
+
+<template id="tpl-batch-job">
+    <li class="job" data-slot="item">
+        <div class="job__head">
+            <svg aria-hidden="true" class="icon">
+                <use href="#i-sheet"/>
+            </svg>
+            <div class="job__file grow">
+                <span class="job__title truncate" data-slot="file-name"></span>
+                <span class="job__size muted num" data-slot="file-size"></span>
+            </div>
+            <span class="badge" data-slot="state"></span>
+            <button class="icon-btn" data-slot="remove" type="button">
+                <svg aria-hidden="true" class="icon">
+                    <use href="#i-x"/>
+                </svg>
+            </button>
+        </div>
+        <div class="field">
+            <label class="field__label" data-slot="name-label">Batch name<span aria-hidden="true" class="req">
+                *</span></label>
+            <input autocomplete="off" class="input" data-slot="name" maxlength="120" required type="text">
+            <p class="field__hint" data-slot="name-hint" hidden></p>
+            <p class="field__error" data-slot="name-error" hidden></p>
+        </div>
+        <div class="job__meters" data-slot="meters" hidden>
+            <div class="meter">
+                <div class="meter__head"><span data-slot="upload-label">Upload</span><span class="num"
+                                                                                        data-slot="upload-text"></span>
+                </div>
+                <progress class="progress" data-slot="upload-bar" max="1" value="0"></progress>
+            </div>
+            <div class="meter">
+                <div class="meter__head"><span data-slot="validate-label">Validation</span><span class="num"
+                                                                                              data-slot="validate-text"></span>
+                </div>
+                <progress class="progress progress--info" data-slot="validate-bar" max="1" value="0"></progress>
+            </div>
+        </div>
+        <p class="field__error" data-slot="message" hidden></p>
+        <div class="job__foot" data-slot="foot" hidden>
+            <dl class="meta-strip">
+                <dt>Valid</dt>
+                <dd class="num" data-slot="valid">0</dd>
+                <dt>Invalid</dt>
+                <dd class="num" data-slot="invalid">0</dd>
+                <dt>Duplicate</dt>
+                <dd class="num" data-slot="duplicate">0</dd>
+            </dl>
+            <a class="btn btn--ghost btn--sm" data-slot="watch" hidden rel="noopener" target="_blank">View rows<span
+                    class="sr-only" data-slot="watch-name"></span><span class="sr-only"> (opens in a new tab)</span>
+                <svg aria-hidden="true" class="icon icon--sm">
+                    <use href="#i-external"/>
+                </svg>
+            </a>
+            <a class="btn btn--secondary btn--sm" data-slot="review" hidden>Review results<span class="sr-only"
+                                                                                                 data-slot="review-name"></span></a>
+        </div>
+    </li>
 </template>
 
 <template id="tpl-template">
@@ -504,6 +552,21 @@
     </div>
 
     <section aria-label="Batch records" class="card card--fill">
+        <div class="live" data-slot="live" hidden>
+            <div class="live__head">
+                <span class="badge badge--info badge--live" data-slot="live-badge">Live</span>
+                <span class="live__label" data-slot="live-label" id="batch-live-label">Validating rows</span>
+                <span class="num muted grow" data-slot="live-text"></span>
+                <button class="btn btn--secondary btn--sm" data-slot="live-pause" type="button">
+                    <svg aria-hidden="true" class="icon icon--sm">
+                        <use data-slot="live-pause-icon" href="#i-pause"/>
+                    </svg>
+                    <span data-slot="live-pause-label">Pause updates</span>
+                </button>
+            </div>
+            <progress aria-labelledby="batch-live-label" class="progress progress--info" data-slot="live-bar" max="1"
+                      value="0"></progress>
+        </div>
         <div aria-label="Filter records by status" class="tabs" role="tablist">
             <button aria-controls="batch-records" class="tab" data-tab="all" role="tab" type="button">All <span
                     class="tab__count" hidden></span></button>

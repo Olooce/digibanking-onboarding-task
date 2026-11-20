@@ -98,8 +98,30 @@
     opacity: 0.5;
 }
 
-.btn[aria-busy="true"] {
+.btn[aria-busy="true"],
+.btn[data-busy] {
     cursor: progress;
+}
+
+.download {
+    display: inline-grid;
+}
+
+.download:has(> .btn[hidden]) {
+    display: none;
+}
+
+.download > * {
+    grid-area: 1 / 1;
+}
+
+.download__bar {
+    align-self: end;
+    justify-self: stretch;
+    block-size: 3px;
+    margin: 0 var(--sp-2) 3px;
+    inline-size: auto;
+    pointer-events: none;
 }
 
 .btn[aria-busy="true"] .icon {
@@ -483,21 +505,60 @@
     --alert-border: var(--color-danger-border);
 }
 
-/* Progress */
 .progress {
-    position: relative;
-    height: 6px;
-    overflow: hidden;
-    border-radius: var(--radius-pill);
+    --progress-bar-radius: var(--radius-pill);
+    --progress-bar-indeterminate-size: 30%;
+    --progress-bar-indeterminate-animation-duration: 1.5s;
+    appearance: none;
+    display: block;
+    inline-size: 100%;
+    block-size: 6px;
+    border: 0 solid;
+    border-radius: var(--progress-bar-radius);
+    overflow: clip;
     background: var(--color-neutral-bg);
+    container-type: inline-size;
 }
 
-.progress__bar {
-    height: 100%;
-    width: calc(var(--value, 0) * 1%);
-    border-radius: inherit;
+@media (prefers-reduced-motion: reduce) {
+    .progress {
+        --progress-bar-indeterminate-animation-duration: 10s;
+    }
+}
+
+.progress:indeterminate {
+    --progress-bar-animation: progress-bar-indeterminate var(--progress-bar-indeterminate-animation-duration) infinite linear;
+}
+
+.progress::-webkit-progress-bar {
+    background: transparent;
+}
+
+.progress::-webkit-progress-value {
+    border-radius: var(--progress-bar-radius);
     background: var(--progress-color, var(--color-primary));
-    transition: width 0.3s ease;
+    transition: inline-size 0.3s;
+    animation: var(--progress-bar-animation, revert-rule);
+}
+
+.progress::-moz-progress-bar {
+    border-radius: var(--progress-bar-radius);
+    background: var(--progress-color, var(--color-primary));
+    transition: inline-size 0.3s;
+    animation: var(--progress-bar-animation, revert-rule);
+}
+
+@keyframes progress-bar-indeterminate {
+    from, to {
+        inline-size: var(--progress-bar-indeterminate-size);
+        margin-right: auto;
+    }
+    from {
+        translate: -100%;
+    }
+    to {
+        translate: 100cqi;
+    }
 }
 
 .progress--success {
@@ -873,13 +934,12 @@ fieldset {
     cursor: pointer;
 }
 
-.dropzone:focus-visible {
-    outline: none;
-    border-color: var(--color-focus);
-    box-shadow: var(--focus-ring);
+.dropzone__input:focus-visible + .dropzone {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
 }
 
-fieldset:disabled .dropzone {
+.dropzone__input:disabled + .dropzone {
     cursor: not-allowed;
     opacity: 0.6;
 }
@@ -899,6 +959,92 @@ fieldset:disabled .dropzone {
     justify-content: space-between;
     gap: var(--sp-2);
     font-size: var(--text-md);
+}
+
+.jobs {
+    display: grid;
+    gap: var(--sp-2);
+}
+
+.job {
+    display: grid;
+    gap: var(--sp-2);
+    padding: var(--sp-3);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-base);
+    background: var(--color-surface);
+}
+
+.job:is([data-state="failed"], [data-state="rejected"]) {
+    border-color: var(--color-danger-border);
+    background: var(--color-danger-bg);
+}
+
+.job__head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+}
+
+.job__head > .icon {
+    color: var(--color-primary);
+}
+
+.job__file {
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-2);
+    min-width: 0;
+}
+
+.job__title {
+    font-weight: var(--weight-semibold);
+}
+
+.job__size {
+    flex: none;
+    font-size: var(--text-sm);
+}
+
+.job__meters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-3);
+}
+
+@media (max-width: 640px) {
+    .job__meters {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.job__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+}
+
+.live {
+    display: grid;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+    border-bottom: var(--border-width) solid var(--color-border);
+    background: var(--color-info-bg);
+}
+
+.live__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+    font-size: var(--text-md);
+}
+
+.live__label {
+    font-weight: var(--weight-semibold);
 }
 
 .tally {

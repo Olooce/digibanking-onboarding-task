@@ -52,7 +52,6 @@ export function replace(parent: Element, children: Child | Child[]): void {
     append(parent, children);
 }
 
-/** True when a keyboard shortcut should be ignored because the user is typing. */
 export function isTyping(target: EventTarget | null): boolean {
     if (!(target instanceof HTMLElement)) return false;
     return target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
