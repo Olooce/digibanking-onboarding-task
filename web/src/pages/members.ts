@@ -14,18 +14,22 @@ const ACCOUNT_TYPES = [
     {value: 'joint', label: 'Joint'},
 ];
 
+/** One field per column. */
 const MEMBER_COLUMNS: ColumnConfig<Member>[] = [
     {
-        key: 'last_name',
-        label: 'Name',
+        key: 'first_name',
+        label: 'First name',
         ...TEXT_FILTER,
         hideable: false,
-        accessor: (row) => `${row.firstName} ${row.lastName}`,
+        accessor: (row) => row.firstName,
+        // Shows only the first name. The last name is added as hidden text so screen reader users hear which
+        // member the link opens, because several members can share a first name.
         render: (row) => el('a', {
             class: 'dt-link',
             href: `#/members/${encodeURIComponent(row.id)}`
-        }, `${row.firstName} ${row.lastName}`),
+        }, [row.firstName, el('span', {class: 'sr-only'}, ` ${row.lastName}`)]),
     },
+    {key: 'last_name', label: 'Last name', ...TEXT_FILTER, accessor: (row) => row.lastName},
     {key: 'member_number', label: 'Member no.', ...TEXT_FILTER, accessor: (row) => row.memberNumber},
     {key: 'account_number', label: 'Account no.', ...TEXT_FILTER, accessor: (row) => row.accountNumber},
     {key: 'phone_number', label: 'Phone', ...TEXT_FILTER, accessor: (row) => row.phoneNumber},

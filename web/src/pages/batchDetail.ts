@@ -4,6 +4,7 @@ import {ENUM_FILTER, type ListSchema, NUMBER_FILTER, TEXT_FILTER, toODataParams}
 import {commitUpload, getUpload, listRecords, type UploadDetail, type UploadRecord} from '../api/uploads.js';
 import {$, el, fromTemplate, replace, slot} from '../dom.js';
 import {fileSlug, formatBytes, formatCount, formatDateTime} from '../format.js';
+import {int} from '../api/xml.js';
 import {setIcon} from '../icons.js';
 import type {Page} from '../router.js';
 import type {Shell} from '../shell.js';
@@ -11,6 +12,7 @@ import {RECORD_STATUS, statusBadge, statusOptions, UPLOAD_STATUS} from '../statu
 import {type ColumnConfig, createDataTable, type Query} from '../ui/dataTable.js';
 import {bindDownloadButton} from '../ui/downloadButton.js';
 import {createFormFields, type FieldConfig} from '../ui/form.js';
+import {setProgress} from '../ui/progress.js';
 import {bindTabs} from '../ui/tabs.js';
 import {watchUploadEvents} from '../upload/events.js';
 
@@ -39,10 +41,11 @@ const RECORD_COLUMNS: ColumnConfig<UploadRecord>[] = [
         label: 'Member',
         sortable: false,
         filterable: false,
+        // Every row has the same visible text, so hidden text tells screen reader users which member it opens.
         render: (row) => row.memberId ? el('a', {
             class: 'dt-link',
             href: `#/members/${encodeURIComponent(row.memberId)}`
-        }, 'View member') : '',
+        }, ['View member', el('span', {class: 'sr-only'}, ` ${row.firstName} ${row.lastName}`)]) : '',
     },
 ];
 
@@ -64,11 +67,15 @@ const COMMIT_FIELDS: FieldConfig[] = [
 /** Status tabs above the records table. "all" shows every row. */
 const TABS = ['all', 'valid', 'invalid', 'duplicate', 'onboarded'];
 const COMMITTABLE = ['validated', 'validated_with_errors'];
-const IN_PROGRESS = ['created', 'uploading', 'uploaded', 'validating'];
+/** The workbook has not been fully received and verified yet; the new batch page finishes the upload. */
+const UPLOAD_UNFINISHED = ['created', 'uploading', 'uploaded'];
+/** Rows are being checked or committed right now. */
+const RUNNING = ['validating', 'committing'];
 /** While the batch is in one of these states its rows are still changing, so the page follows its events. */
-const LIVE_STATUSES = [...IN_PROGRESS, 'committing'];
-const ROW_EVENTS = ['processing_started', 'row_processed', 'row_committed'];
+const LIVE_STATUSES = [...UPLOAD_UNFINISHED, ...RUNNING];
+const ROW_EVENTS = ['processing_started', 'row_processed', 'commit_started', 'row_committed'];
 const FINAL_EVENTS = ['validation_completed', 'commit_completed', 'failed'];
+/** Rows arrive several times a second, so the table is fetched again at most once a second. */
 const LIVE_REFRESH_MS = 1000;
 
 export function batchDetailPage(shell: Shell): Page {
@@ -101,6 +108,50 @@ export function batchDetailPage(shell: Shell): Page {
         let commitResultShown = false;
         const exportButtons = [slot<HTMLButtonElement>(view, 'export-csv'), slot<HTMLButtonElement>(view, 'export-xlsx')];
         const exportHint = slot(view, 'export-hint');
+
+        // Live strip above the table: how far the running validation or commit has got.
+        const live = slot(view, 'live');
+        const liveBadge = slot(view, 'live-badge');
+        const liveLabel = slot(view, 'live-label');
+        const liveText = slot(view, 'live-text');
+        const liveBar = slot<HTMLProgressElement>(view, 'live-bar');
+        const livePause = slot<HTMLButtonElement>(view, 'live-pause');
+        const livePauseIcon = slot<SVGUseElement>(view, 'live-pause-icon');
+        const livePauseLabel = slot(view, 'live-pause-label');
+        /** Row numbers finished in the current run. A set, so an event replayed after a reconnect counts once. */
+        const liveRows = new Set<number>();
+        let liveTotal = 0;
+        /** While paused the table stops changing; the progress bar keeps counting. */
+        let paused = false;
+
+        // Rows that appeared or changed status since the same view was last drawn get a short highlight.
+        let lastViewKey = '';
+        let lastStatuses = new Map<string, string>();
+        let freshIds = new Set<string>();
+
+        function startLive(label: string, total: number): void {
+            live.hidden = false;
+            liveLabel.textContent = label;
+            liveTotal = total;
+            liveRows.clear();
+            showLiveProgress(0);
+        }
+
+        function showLiveProgress(done: number): void {
+            setProgress(liveBar, liveTotal > 0 ? done : null, liveTotal);
+            liveText.textContent = liveTotal > 0 ? `${formatCount(done)} of ${formatCount(liveTotal)}` : '';
+        }
+
+        function setPaused(next: boolean): void {
+            paused = next;
+            livePauseLabel.textContent = paused ? 'Resume updates' : 'Pause updates';
+            setIcon(livePauseIcon, paused ? 'play' : 'pause');
+            liveBadge.className = paused ? 'badge badge--warning' : 'badge badge--info badge--live';
+            liveBadge.textContent = paused ? 'Paused' : 'Live';
+            if (!paused) void table.refresh({quiet: true});
+        }
+
+        livePause.addEventListener('click', () => setPaused(!paused));
 
         // The API exports one status at a time, so exporting needs a status tab.
         function updateExport(): void {
@@ -151,10 +202,10 @@ export function batchDetailPage(shell: Shell): Page {
             // The status notice needs the row counts, and must not replace the result of a commit.
             if (!countsLoaded || commitResultShown) return;
             notice.hidden = true;
-            if (IN_PROGRESS.includes(batch.status)) {
-                showNotice('info', 'Validation in progress', 'Rows update here as they are checked. Review and commit once validation finishes.', {
+            if (UPLOAD_UNFINISHED.includes(batch.status)) {
+                showNotice('info', 'Upload not finished', 'The workbook has not been fully received yet. Resume the upload to validate its rows; they appear here as they are checked.', {
                     href: `#/batches/new?resume=${encodeURIComponent(batch.id)}`,
-                    label: 'Follow progress'
+                    label: 'Resume upload'
                 });
             } else if (batch.status === 'failed') {
                 showNotice('danger', 'Validation failed', 'The workbook could not be read. Check that it uses the template, then start a new batch.', {
@@ -171,6 +222,11 @@ export function batchDetailPage(shell: Shell): Page {
             if (activeTab !== 'all') params.set('status', activeTab);
             try {
                 const page = await listRecords(uploadId, params, query.signal);
+                const viewKey = `${activeTab}?${params.toString()}`;
+                const before = viewKey === lastViewKey ? lastStatuses : null;
+                freshIds = new Set(before ? page.rows.filter((row) => before.get(row.id) !== row.status).map((row) => row.id) : []);
+                lastViewKey = viewKey;
+                lastStatuses = new Map(page.rows.map((row) => [row.id, row.status]));
                 counts = page.statusCounts;
                 countsLoaded = true;
                 for (const tab of TABS) tabs.setCount(tab, tab === 'all' ? Object.values(counts).reduce((sum, n) => sum + n, 0) : counts[tab] ?? 0);
@@ -199,6 +255,15 @@ export function batchDetailPage(shell: Shell): Page {
             if (!fields.validate()) return;
             commitButton.disabled = true;
             commitButton.setAttribute('aria-busy', 'true');
+            // The commit request returns when every row is done, so meanwhile the table is fetched again
+            // every second and the strip counts the rows onboarded so far.
+            const onboardedBefore = counts.onboarded ?? 0;
+            startLive('Committing rows', counts.valid ?? 0);
+            const poll = setInterval(async () => {
+                if (paused) return;
+                await table.refresh({quiet: true});
+                showLiveProgress((counts.onboarded ?? 0) - onboardedBefore);
+            }, LIVE_REFRESH_MS);
             try {
                 const result = await commitUpload(uploadId, signal);
                 batch = result.upload;
@@ -217,14 +282,17 @@ export function batchDetailPage(shell: Shell): Page {
                 const {title, detail} = describeError(error);
                 showNotice('danger', `Not committed. ${title}`, detail);
             } finally {
+                clearInterval(poll);
+                live.hidden = true;
                 commitButton.disabled = false;
                 commitButton.removeAttribute('aria-busy');
             }
         });
 
-        bindDownloadButton(rejectedButton, 'Rejected rows', () => downloadRejectedRows(uploadId, fileSlug(batch.batchName)));
-        bindDownloadButton(exportButtons[0]!, 'Export', () => exportRecords(uploadId, exportQuery(), 'csv', fileSlug(batch.batchName)));
-        bindDownloadButton(exportButtons[1]!, 'Export', () => exportRecords(uploadId, exportQuery(), 'xlsx', fileSlug(batch.batchName)));
+        const fileBase = fileSlug(batch.batchName);
+        bindDownloadButton(rejectedButton, 'Rejected rows', (onProgress) => downloadRejectedRows(uploadId, fileBase, onProgress));
+        bindDownloadButton(exportButtons[0]!, 'Export', (onProgress) => exportRecords(uploadId, exportQuery(), 'csv', fileBase, onProgress));
+        bindDownloadButton(exportButtons[1]!, 'Export', (onProgress) => exportRecords(uploadId, exportQuery(), 'xlsx', fileBase, onProgress));
 
         tabs.select(activeTab);
         updateExport();
@@ -239,43 +307,63 @@ export function batchDetailPage(shell: Shell): Page {
             } catch {
                 // The table's own error state reports a lost connection.
             }
-            void table.refresh();
+            void table.refresh({quiet: true});
         }
 
-        // Rows change many times a second during validation, so the table is refreshed at most once a second.
         let refreshTimer: ReturnType<typeof setTimeout> | undefined;
         signal.addEventListener('abort', () => clearTimeout(refreshTimer), {once: true});
+
+        /** Fetches the visible rows again within a second, unless a fetch is already waiting or updates are paused. */
+        function scheduleRefresh(): void {
+            if (paused || refreshTimer !== undefined) return;
+            refreshTimer = setTimeout(() => {
+                refreshTimer = undefined;
+                void table.refresh({quiet: true});
+            }, LIVE_REFRESH_MS);
+        }
 
         function followLiveChanges(): void {
             watchUploadEvents(uploadId, {
                 onConnection() {
                     // Missed events are replayed after a reconnect, so nothing is needed here.
                 },
-                onEvent(type) {
+                onEvent(type, payload) {
+                    if (type === 'processing_started') {
+                        startLive('Validating rows', int(payload, 'total_rows'));
+                    } else if (type === 'commit_started') {
+                        startLive('Committing rows', int(payload, 'eligible_rows'));
+                    } else if (type === 'row_processed' || type === 'row_committed') {
+                        liveRows.add(int(payload, 'row_number'));
+                        showLiveProgress(liveRows.size);
+                    }
+                    // A run starting or ending changes the batch status, row count and notice, so the batch is fetched again.
                     if (FINAL_EVENTS.includes(type)) {
+                        live.hidden = true;
                         clearTimeout(refreshTimer);
                         refreshTimer = undefined;
                         void reloadBatch();
-                    } else if (ROW_EVENTS.includes(type) && refreshTimer === undefined) {
-                        refreshTimer = setTimeout(() => {
-                            refreshTimer = undefined;
-                            void reloadBatch();
-                        }, LIVE_REFRESH_MS);
+                    } else if (type === 'processing_started' || type === 'commit_started') {
+                        void reloadBatch();
+                    } else if (ROW_EVENTS.includes(type)) {
+                        scheduleRefresh();
                     }
                 },
             }, signal);
         }
 
+        // Until validation has finished the newest rows are listed first, so each one appears at the top as it is done.
+        const running = LIVE_STATUSES.includes(batch.status);
         const table = createDataTable<UploadRecord>({
             container: host,
             label: 'Batch records',
             columns: RECORD_COLUMNS,
             data: load,
             rowId: (row) => row.id,
+            rowClass: (row) => freshIds.has(row.id) ? 'dt-row--fresh' : undefined,
             pageSizes: [10, 20, 50, 100],
             pageSize: 20,
-            sorts: [{field: 'row_number', dir: 'asc'}],
-            emptyMessage: 'No rows in this view.',
+            sorts: [{field: 'row_number', dir: running ? 'desc' : 'asc'}],
+            emptyMessage: running ? 'Rows appear here as they are checked.' : 'No rows in this view.',
         });
         if (LIVE_STATUSES.includes(batch.status)) followLiveChanges();
         return () => table.destroy();

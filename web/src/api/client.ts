@@ -77,15 +77,39 @@ export async function requestXml(path: string, init: RequestInit = {}): Promise<
     return root;
 }
 
+/** Told how many bytes of a download have arrived; `total` is null when the server does not send the size. */
+export type ProgressListener = (received: number, total: number | null) => void;
+
+/** Reads the body piece by piece so `onProgress` can follow it, then joins the pieces into one Blob. */
+async function readBody(response: Response, onProgress: ProgressListener): Promise<Blob> {
+    const type = response.headers.get('Content-Type') ?? '';
+    // The total is the Content-Length header: the full size in bytes. Without it the size is unknown (null).
+    const total = Number(response.headers.get('Content-Length')) || null;
+    if (!response.body) return response.blob();
+    const reader = response.body.getReader();
+    const pieces: BlobPart[] = [];
+    let received = 0;
+    onProgress(received, total);
+    while (true) {
+        const {done, value} = await reader.read();
+        if (done) break;
+        pieces.push(value);
+        received += value.byteLength;
+        onProgress(received, total);
+    }
+    return new Blob(pieces, {type});
+}
+
 /** Fetches a binary download and the file name the server suggests. */
-export async function requestBlob(path: string, init: RequestInit = {}): Promise<{
+export async function requestBlob(path: string, onProgress?: ProgressListener): Promise<{
     blob: Blob;
     fileName: string | null
 }> {
-    const response = await send(path, init);
+    const response = await send(path, {});
     const disposition = response.headers.get('Content-Disposition') ?? '';
     const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition);
-    return {blob: await response.blob(), fileName: match?.[1] ? decodeURIComponent(match[1]) : null};
+    const blob = onProgress ? await readBody(response, onProgress) : await response.blob();
+    return {blob, fileName: match?.[1] ? decodeURIComponent(match[1]) : null};
 }
 
 export function withQuery(path: string, query: URLSearchParams): string {
